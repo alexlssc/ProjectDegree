@@ -1,0 +1,1 @@
+~/SUMO/tools/randomTrips.py -n fivelanes.net.xml -e #Number_Of_Vehicles# --trip-attributes="departLane=\"random\"" --allow-fringe

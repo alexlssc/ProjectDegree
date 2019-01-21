@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on Sun 22 Apr 2018 16:35:43 BST by SUMO gui Version 0.32.0
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
+
+    <input>
+        <net-file value="fivelanes.net.xml"/>
+        <route-files value="100v-trips.trips.xml"/>
+    </input>
+
+    <output>
+        <tripinfo-output value="100v-trip-info-output.xml"/>
+        <lanechange-output value="100v-lane-change.xml"/>
+    </output>
+
+    <time>
+        <step-length value="1.000000"/>
+    </time>
+
+    <processing>
+        <ignore-route-errors value="true"/>
+    </processing>
+
+    <report>
+        <verbose value="true"/>
+        <duration-log.statistics value="true"/>
+        <no-step-log value="true"/>
+    </report>
+
+    <traci_server>
+        <remote-port value="1337"/>
+    </traci_server>
+
+    <gui_only>
+        <tracker-interval value="1"/>
+    </gui_only>
+
+</configuration>
