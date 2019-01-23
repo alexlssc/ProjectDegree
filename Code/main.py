@@ -3,6 +3,7 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats as stats
+from random import randint
 from vehicleClass import Vehicle
 
 if 'SUMO_HOME' in os.environ:
@@ -11,8 +12,13 @@ if 'SUMO_HOME' in os.environ:
 else:
     sys.exit("please declare environment variable 'SUMO_HOME'")
 
+listOfSimulation = []
+
 sumoBinary = "/Users/alexandrelissac/Documents/SUMO/bin/sumo-gui"
-sumoCmd = [sumoBinary, "-c", "/Users/alexandrelissac/Desktop/Project/Simulation/Resources/FiveLanes/100v.sumocfg", "--seed", "965"]
+for i in range(2):
+    randomSeed = str(randint(0,900))
+    sumoCmd = [sumoBinary, "-c", "/Users/alexandrelissac/Desktop/Project/Simulation/Resources/FiveLanes/100v.sumocfg", "--seed", randomSeed]
+    listOfSimulation.append(sumoCmd)
 
 import traci
 import traci.constants as tc
@@ -71,15 +77,16 @@ def keepTrackOfSpeed():
     for vehicle in listOfVehicleOnNetwork:
         listOfVehicle[int(vehicle)].add_new_speed(traci.vehicle.getSpeed(vehicle))
 
-traci.start(sumoCmd)
-vehID = '0'
-listOfVehicle = []
-print(traci.simulation.getTime())
-while traci.simulation.getMinExpectedNumber() > 0:
-    keepTrackOfNewVehicle()
-    traci.simulationStep()
-    keepTrackOfSpeed()
-    checkIfCarFinished()
+for simulation in listOfSimulation:
+    traci.start(simulation)
+    vehID = '0'
+    listOfVehicle = []
+    print(traci.simulation.getTime())
+    while traci.simulation.getMinExpectedNumber() > 0:
+        keepTrackOfNewVehicle()
+        traci.simulationStep()
+        keepTrackOfSpeed()
+        checkIfCarFinished()
 
-displayResults()
-traci.close(False)
+    displayResults()
+    traci.close(False)
