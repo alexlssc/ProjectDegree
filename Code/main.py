@@ -72,8 +72,6 @@ def keepTrackOfSpeed():
 
 traci.start(sumoCmd)
 vehID = '0'
-# traci.vehicle.setColor(vehID, (255, 0, 0))
-# traci.vehicle.subscribe(vehID, (tc.VAR_ROAD_ID, tc.VAR_LANEPOSITION, tc.VAR_LANE_ID))
 listOfVehicle = []
 print(traci.simulation.getTime())
 while traci.simulation.getMinExpectedNumber() > 0:
@@ -83,7 +81,4 @@ while traci.simulation.getMinExpectedNumber() > 0:
     checkIfCarFinished()
 
 displayResults()
-# for vehicle in listOfVehicle:
-#     print(vehicle.get_id())
-#     print(vehicle.get_listSpeed())
 traci.close(False)
