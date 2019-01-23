@@ -12,7 +12,7 @@ else:
     sys.exit("please declare environment variable 'SUMO_HOME'")
 
 sumoBinary = "/Users/alexandrelissac/Documents/SUMO/bin/sumo-gui"
-sumoCmd = [sumoBinary, "-c", "/Users/alexandrelissac/Desktop/Project/Simulation/Resources/FiveLanes/100v.sumocfg"]
+sumoCmd = [sumoBinary, "-c", "/Users/alexandrelissac/Desktop/Project/Simulation/Resources/FiveLanes/100v.sumocfg", "--seed", "965"]
 
 import traci
 import traci.constants as tc
@@ -29,6 +29,7 @@ def keepTrackOfNewVehicle():
     listOfNewVehicleLoaded = traci.simulation.getLoadedIDList()
     if listOfNewVehicleLoaded:
         for vehicle in listOfNewVehicleLoaded:
+            traci.vehicle.setLaneChangeMode(vehicle, 64)
             listOfVehicle.append(Vehicle(vehicle))
 
     # Keep track of all departed vehicle
@@ -45,8 +46,8 @@ def displayResultsTimeTravelled():
     plt.plot(sorted(listOfTime),fit,'-o')
     plt.hist(sorted(listOfTime), density=True)
     plt.ylabel('Probability')
-    plt.xlabel('Time travelled in tic')
-    plt.title('Time travelled per vehicle in tic')
+    plt.xlabel('Time travelled in second')
+    plt.title('Time travelled per vehicle in second')
 
 def displayAverageSpeedPerCar():
     listOfSpeedAverage = []
