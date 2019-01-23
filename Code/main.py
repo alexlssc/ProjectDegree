@@ -15,9 +15,9 @@ else:
 listOfSimulation = []
 
 sumoBinary = "/Users/alexandrelissac/Documents/SUMO/bin/sumo-gui"
-for i in range(2):
+for i in range(1):
     randomSeed = str(randint(0,900))
-    sumoCmd = [sumoBinary, "-c", "/Users/alexandrelissac/Desktop/Project/Simulation/Resources/FiveLanes/100v.sumocfg", "--seed", randomSeed]
+    sumoCmd = [sumoBinary, "-c", "/Users/alexandrelissac/Desktop/Project/Simulation/Resources/FiveLanes/500v.sumocfg", "--seed", randomSeed]
     listOfSimulation.append(sumoCmd)
 
 import traci
@@ -35,8 +35,7 @@ def keepTrackOfNewVehicle():
     listOfNewVehicleLoaded = traci.simulation.getLoadedIDList()
     if listOfNewVehicleLoaded:
         for vehicle in listOfNewVehicleLoaded:
-            traci.vehicle.setLaneChangeMode(vehicle, 64)
-            listOfVehicle.append(Vehicle(vehicle))
+            listOfVehicle.append(Vehicle(vehicle,64))
 
     # Keep track of all departed vehicle
     listOfNewVehicleDeparted = traci.simulation.getDepartedIDList()
@@ -67,14 +66,26 @@ def displayAverageSpeedPerCar():
     plt.xlabel('Average speed in m/s')
     plt.title('Average speed per vehicle in m/s')
 
+def displayChangeLaneCount():
+    listOfChangeLaneCount = []
+    for vehicle in listOfVehicle:
+        listOfChangeLaneCount.append(vehicle.get_changeLaneCount())
+    changeLaneCountPlot = plt.figure(3)
+    plt.hist(sorted(listOfChangeLaneCount), density=True)
+    plt.ylabel('Probability')
+    plt.xlabel('Average amount of lane change')
+    plt.title('Average amount of lane change per vehicle')
+
 def displayResults():
     displayResultsTimeTravelled()
     displayAverageSpeedPerCar()
+    displayChangeLaneCount()
     plt.show()
 
-def keepTrackOfSpeed():
+def updateVehicleData():
     listOfVehicleOnNetwork = traci.vehicle.getIDList()
     for vehicle in listOfVehicleOnNetwork:
+        listOfVehicle[int(vehicle)].keepTrackOfLaneChange()
         listOfVehicle[int(vehicle)].add_new_speed(traci.vehicle.getSpeed(vehicle))
 
 for simulation in listOfSimulation:
@@ -85,7 +96,7 @@ for simulation in listOfSimulation:
     while traci.simulation.getMinExpectedNumber() > 0:
         keepTrackOfNewVehicle()
         traci.simulationStep()
-        keepTrackOfSpeed()
+        updateVehicleData()
         checkIfCarFinished()
 
     displayResults()
