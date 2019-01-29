@@ -47,6 +47,9 @@ class Vehicle:
     def get_laneChangeMode(self):
         return traci.vehicle.getLaneChangeMode(self.id)
 
+    def get_carLane(self):
+        return traci.vehicle.getLaneID(self.id)
+
     def keepTrackOfLaneChange(self):
         if self.currentLaneID != traci.vehicle.getLaneID(self.id):    # Detect if new lane different than old one
             self.numberOfLaneChange += 1                              # Add one lane change to count
@@ -54,3 +57,9 @@ class Vehicle:
 
     def get_changeLaneCount(self):
         return self.numberOfLaneChange
+
+    def get_positionOnLane(self):
+        return traci.vehicle.getLanePosition(self.id)
+
+    def get_lengthVehicle(self):
+        return traci.vehicle.getLength(self.id)
