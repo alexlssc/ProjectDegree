@@ -17,9 +17,9 @@ else:
 listOfSimulation = []
 
 sumoBinary = "/Users/alexandrelissac/Documents/SUMO/bin/sumo-gui"
-for i in range(1):
+for i in range(2):
     randomSeed = str(randint(0,900))
-    sumoCmd = [sumoBinary, "-c", "/Users/alexandrelissac/Desktop/Project/Simulation/Resources/FiveLanes/500v.sumocfg", "--lanechange-output", "lanechange.xml" ,"--seed", randomSeed , "--start", "--quit-on-end"]
+    sumoCmd = [sumoBinary, "-c", "/Users/alexandrelissac/Desktop/Project/Simulation/Resources/FiveLanes/500v.sumocfg", "--lanechange-output", "lanechange.xml" ,"--seed", randomSeed , "--output-prefix", str(i), "--start", "--quit-on-end"]
     listOfSimulation.append(sumoCmd)
 
 import traci
