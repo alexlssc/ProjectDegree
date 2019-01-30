@@ -13,12 +13,13 @@ if 'SUMO_HOME' in os.environ:
 else:
     sys.exit("please declare environment variable 'SUMO_HOME'")
 
+
 listOfSimulation = []
 
 sumoBinary = "/Users/alexandrelissac/Documents/SUMO/bin/sumo-gui"
 for i in range(1):
     randomSeed = str(randint(0,900))
-    sumoCmd = [sumoBinary, "-c", "/Users/alexandrelissac/Desktop/Project/Simulation/Resources/FiveLanes/500v.sumocfg", "--seed", randomSeed, "--start", "--quit-on-end"]
+    sumoCmd = [sumoBinary, "-c", "/Users/alexandrelissac/Desktop/Project/Simulation/Resources/FiveLanes/500v.sumocfg", "--lanechange-output", "lanechange.xml" ,"--seed", randomSeed , "--start", "--quit-on-end"]
     listOfSimulation.append(sumoCmd)
 
 import traci
