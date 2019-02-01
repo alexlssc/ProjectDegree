@@ -4,8 +4,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats as stats
 import xlwt
+import subprocess
+import pathlib
 from random import randint
 from vehicleClass import Vehicle
+from datetime import datetime
 
 if 'SUMO_HOME' in os.environ:
     tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
@@ -15,9 +18,10 @@ else:
 
 
 listOfSimulation = []
+numberOfSimulation = 2
 
 sumoBinary = "/Users/alexandrelissac/Documents/SUMO/bin/sumo-gui"
-for i in range(2):
+for i in range(numberOfSimulation):
     randomSeed = str(randint(0,900))
     sumoCmd = [sumoBinary, "-c", "/Users/alexandrelissac/Desktop/Project/Simulation/Resources/FiveLanes/500v.sumocfg", "--lanechange-output", "lanechange.xml" ,"--seed", randomSeed , "--output-prefix", str(i), "--start", "--quit-on-end"]
     listOfSimulation.append(sumoCmd)
@@ -136,6 +140,18 @@ def keepTrackOfOpenSpace(numberOfLane):
             count += 1
         ListOfLanes.append(listOfOpenSpace)
 
+def convertXMLintoCSV():
+    dirName = "/Users/alexandrelissac/Desktop/Project/Simulation/Results/" + datetime.now().strftime('%Y-%m-%d_%H.%M.%S')
+    pathlib.Path(dirName).mkdir(parents=True, exist_ok=True)
+    for sim in range(numberOfSimulation):
+        fileTargetLaneChange = str(sim) + "lanechange.xml"
+        fileOutputLaneChnage = str(sim) + "_lanechange.csv"
+        fileTargetTripInfo = str(sim) + "tripinfos.xml"
+        fileOutputTripInfo = str(sim) + "_tripinfos.csv"
+        subprocess.Popen(["python", "/Users/alexandrelissac/Documents/SUMO/tools/xml/xml2csv.py", "/Users/alexandrelissac/Desktop/Project/Simulation/Code/" + fileTargetLaneChange, "--output", dirName + "/" + fileOutputLaneChnage])
+        subprocess.Popen(["python", "/Users/alexandrelissac/Documents/SUMO/tools/xml/xml2csv.py", "/Users/alexandrelissac/Desktop/Project/Simulation/Resources/FiveLanes/" + fileTargetTripInfo, "--output", dirName + "/" + fileOutputTripInfo])
+
+
 wb = xlwt.Workbook()
 ws = wb.add_sheet('A Test Sheet')
 
@@ -150,7 +166,8 @@ for idx, simulation in enumerate(listOfSimulation):
         updateVehicleData()
         checkIfCarFinished()
 
-    displayResults(idx)
+    #displayResults(idx)
+    convertXMLintoCSV()
     traci.close(True)
 
 wb.save('example.xls')
