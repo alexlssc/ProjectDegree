@@ -154,7 +154,7 @@ def convertXMLintoCSV():
         subprocess.Popen(["python", "/Users/alexandrelissac/Documents/SUMO/tools/xml/xml2csv.py", "/Users/alexandrelissac/Desktop/Project/Simulation/Resources/FiveLanes/" + fileTargetTripInfo, "--output", dirName + "/" + fileOutputTripInfo])
     return dirName
 
-def getATT(dirName):
+def analyseResults(dirName):
     count = 0
     file_exist = True
     wb = xlwt.Workbook()
@@ -198,4 +198,4 @@ for idx, simulation in enumerate(listOfSimulation):
     traci.close(True)
 dirName = convertXMLintoCSV()
 time.sleep(5) # Wait for computer to save converted csv file
-getATT(dirName)
+analyseResults(dirName)
