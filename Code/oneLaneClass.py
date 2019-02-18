@@ -60,7 +60,7 @@ class oneLaneObject:
         vehicleOnLane = self.get_vehicleOnLane()
         for vehicle in vehicleOnLane:
             if not vehicle in listArrived:
-                self.vehiclePosition.update({vehicle : traci.vehicle.getLanePosition(vehicle)})
+                self.vehiclePosition.update({vehicle : traci.vehicle.getLanePosition(vehicle) + traci.vehicle.getSpeed(vehicle)})
         previousId = None
         previousPosition = None
         count = 0
