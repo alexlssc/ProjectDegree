@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on Tue Feb 12 12:09:00 2019 by Eclipse SUMO GUI Version 1.0.1
+<!-- generated on Mon Feb 18 22:15:09 2019 by Eclipse SUMO GUI Version 1.0.1
 <configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
 
     <input>
@@ -25,11 +25,11 @@
     </report>
 
     <traci_server>
-        <remote-port value="54322"/>
+        <remote-port value="53334"/>
     </traci_server>
 
     <random_number>
-        <seed value="332"/>
+        <seed value="582"/>
     </random_number>
 
     <gui_only>
@@ -40,5 +40,6 @@
 -->
 
 <lanechanges>
-    <change id="1" type="DEFAULT_VEHTYPE" time="7.00" from="gneE0_4" to="gneE0_3" dir="-1" speed="13.14" pos="52.57" reason="keepRight" leaderGap="None" leaderSecureGap="None" followerGap="29.19" followerSecureGap="0.00" origLeaderGap="None" origLeaderSecureGap="None"/>
+    <change id="0" type="DEFAULT_VEHTYPE" time="6.00" from="gneE0_1" to="gneE0_0" dir="-1" speed="11.24" pos="43.79" reason="keepRight" leaderGap="None" leaderSecureGap="None" followerGap="31.56" followerSecureGap="0.00" origLeaderGap="None" origLeaderSecureGap="None"/>
+    <change id="1" type="DEFAULT_VEHTYPE" time="7.00" from="gneE0_4" to="gneE0_3" dir="-1" speed="12.88" pos="49.31" reason="keepRight" leaderGap="None" leaderSecureGap="None" followerGap="36.66" followerSecureGap="0.00" origLeaderGap="None" origLeaderSecureGap="None"/>
 </lanechanges>

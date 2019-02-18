@@ -19,9 +19,10 @@ class AllLanes:
         self.numberOfLane = traci.lane.getIDCount()
         self.listOfVehicle = []
         self.listOfLane = []
+        self.listOfYCoordinate = [-14.85, -11.55, -8.25, -4.45, -1.65]
         for i in range(self.numberOfLane):
             laneId = "gneE0_" + str(i)
-            self.listOfLane.append(oneLaneObject(laneId))
+            self.listOfLane.append(oneLaneObject(laneId, self.listOfYCoordinate[i]))
 
 
     def keepTrackOfNewVehicle(self):
@@ -38,6 +39,9 @@ class AllLanes:
     def get_openSpaceForSpecificLane(self, laneId):
         return self.listOfLane[laneId].get_currentOpenSpace()
 
+    def get_openSpaceIDForSpecificLane(self, laneId):
+        return self.listOfLane[laneId].get_curentOpenSpaceId()
+
     def get_vehicleOnLaneForSpecificLane(self, laneId):
         return self.listOfLane[laneId].get_vehicleOnLane()
 
@@ -45,6 +49,7 @@ class AllLanes:
         listArrived = traci.simulation.getArrivedIDList()
         for lane in self.listOfLane:
             lane.updateOpenSpace(listArrived)
+            lane.draw_OpenSpace()
 
     def get_listOfVehicle(self):
         return self.listOfVehicle

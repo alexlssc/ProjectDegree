@@ -8,6 +8,5 @@
 # totalHash = hashlib.sha256(bytesTotalHash).hexdigest()
 # print(totalHash)
 
-test1 = [(1,6), (9,12), (5,6), (20,1)]
-test1.sort(key=lambda tup: tup[1])
-print(test1)
+test2 = 5 ** 2
+print(str(test2))

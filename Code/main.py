@@ -37,46 +37,6 @@ import traci.constants as tc
 
 showGraph = False
 
-def keepTrackOfOpenSpace(numberOfLane):
-    ListOfLanes = []
-    for i in range(numberOfLane - 1):
-        listOfPosition = {}
-        listOfOpenSpace = {}
-        laneToCheck = "gneE0_" + str(i)
-        lengthLane = traci.lane.getLength(laneToCheck)
-        vehicleOnLane = traci.lane.getLastStepVehicleIDs(laneToCheck)
-        for vehicle in vehicleOnLane:
-            listOfPosition.update({vehicle : listOfVehicle[int(vehicle)].get_positionOnLane()})
-
-        previousId = None
-        previousPosition = None
-        count = 0
-        for id, position in listOfPosition.items():
-            lengthVehicle = listOfVehicle[int(id)].get_lengthVehicle()
-            if len(listOfPosition) == 1:
-                distanceBeforeCar = position - (lengthVehicle / 2)
-                distanceAfterCar = lengthLane - (position + ( lengthVehicle / 2 ))
-                middlePositionDistanceBeforeCar = distanceBeforeCar / 2
-                middlePositionDistanceAfterCar = lengthLane - (distanceAfterCar / 2)
-                listOfOpenSpace.update({middlePositionDistanceBeforeCar : distanceBeforeCar})
-                listOfOpenSpace.update({middlePositionDistanceAfterCar : distanceAfterCar})
-            else:
-                if count == 0:
-                    distance = position - (lengthVehicle / 2)
-                    middlePosition = distance / 2
-                elif count == len(listOfPosition) - 1:
-                    distance = lengthLane - (position + ( lengthVehicle / 2 ) )
-                    middlePosition = lengthLane - (distance / 2)
-                else:
-                    distance = (position - (lengthVehicle / 2)) - (previousPosition + (listOfVehicle[int(previousId)].get_lengthVehicle() / 2))
-                    middlePosition = position - ((distance / 2) + (lengthVehicle / 2))
-                listOfOpenSpace.update({middlePosition : distance})
-
-            previousId = id
-            previousPosition = position
-            count += 1
-        ListOfLanes.append(listOfOpenSpace)
-
 def convertXMLintoCSV():
     dirName = "/Users/alexandrelissac/Desktop/Project/Simulation/Results/" + datetime.now().strftime('%d-%m-%Y_%H.%M.%S')
     pathlib.Path(dirName).mkdir(parents=True, exist_ok=True)
@@ -125,10 +85,9 @@ def main():
         while traci.simulation.getMinExpectedNumber() > 0:
             traci.simulationStep()
             allLanes.updateAllLanes()
-            print(traci.simulation.getCurrentTime())
-            print(allLanes.get_vehicleOnLaneForSpecificLane(0))
-            print(allLanes.get_openSpaceForSpecificLane(0))
-            # updateVehicleData()
+            # print(traci.simulation.getCurrentTime())
+            # print(allLanes.get_vehicleOnLaneForSpecificLane(0))
+            # print(allLanes.get_openSpaceIDForSpecificLane(0))
         traci.close(True)
     dirName = convertXMLintoCSV() # Convert and get directory of new folder
     time.sleep(3) # Wait for computer to save converted csv file

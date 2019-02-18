@@ -1,7 +1,9 @@
 import os
 import sys
 import hashlib
+import math
 from vehicleClass import Vehicle
+from openSpaceClass import OpenSpace
 
 if 'SUMO_HOME' in os.environ:
     tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
@@ -14,12 +16,15 @@ import traci.constants as tc
 
 class oneLaneObject:
 
-    def __init__(self,id):
+    def __init__(self,id, YCoordinate):
         self.id = id
-        self.currentOpenSpace = {}
-        self.previousOpenSpace = {}
+        self.currentOpenSpace = []
+        self.previousOpenSpace = []
+        self.lockedSpace = []
         self.vehiclePosition = {}
         self.laneLength = traci.lane.getLength(id)
+        self.YCoordinate = YCoordinate
+
 
     def get_id(self):
         return self.id
@@ -36,8 +41,21 @@ class oneLaneObject:
     def get_currentOpenSpace(self):
         return self.currentOpenSpace
 
+    def get_curentOpenSpaceId(self):
+        listOfId = []
+        for openSpace in self.currentOpenSpace:
+            listOfId.append(openSpace.get_id())
+        return listOfId
+
+    def get_lockedSpace(self):
+        return self.lockedSpace
+
+    def add_lockedSpace(self, spaceIndex):
+        self.lockedSpace.append(self.get_currentOpenSpace[spaceIndex])
+
     def updateOpenSpace(self, listArrived):
-        self.currentOpenSpace = {}
+        self.previousOpenSpace = self.currentOpenSpace
+        self.currentOpenSpace = []
         self.vehiclePosition = {}
         vehicleOnLane = self.get_vehicleOnLane()
         for vehicle in vehicleOnLane:
@@ -46,60 +64,83 @@ class oneLaneObject:
         previousId = None
         previousPosition = None
         count = 0
-        if self.id == "gneE0_0":
-            print(len(self.vehiclePosition))
-        for id, position in self.vehiclePosition.items():
-            lengthVehicle = traci.vehicle.getLength(id)
-            if self.id == "gneE0_0":
-                print("Car length: " + str(lengthVehicle))
-            if len(self.vehiclePosition) == 1:
-                distanceBeforeCar = position - lengthVehicle
-                distanceAfterCar = self.laneLength - position
-                middlePositionDistanceBeforeCar = distanceBeforeCar / 2
-                middlePositionDistanceAfterCar = self.laneLength - (distanceAfterCar / 2)
-                self.currentOpenSpace.update({middlePositionDistanceBeforeCar : distanceBeforeCar})
-                self.currentOpenSpace.update({middlePositionDistanceAfterCar : distanceAfterCar})
-            elif len(self.vehiclePosition) == 2:
-                if count == 0:
-                    if self.id == "gneE0_0":
-                        print("ID: " + id + " / P: " + str(position))
-                    distance = position - lengthVehicle
-                    middlePosition = distance / 2
-                    self.currentOpenSpace.update({middlePosition : distance})
+        if vehicleOnLane:
+            for id, position in self.vehiclePosition.items():
+                # if self.id == "gneE0_4":
+                #     print("ID: " + id + " / P: " + str(traci.vehicle.getPosition(id)))
+                lengthVehicle = traci.vehicle.getLength(id)
+                if len(self.vehiclePosition) == 1:
+                    distanceBeforeCar = position - lengthVehicle
+                    distanceAfterCar = self.laneLength - position
+                    middlePositionDistanceBeforeCar = distanceBeforeCar / 2
+                    middlePositionDistanceAfterCar = self.laneLength - (distanceAfterCar / 2)
+                    self.currentOpenSpace.append(OpenSpace(distanceBeforeCar, middlePositionDistanceBeforeCar, "start", id))
+                    self.currentOpenSpace.append(OpenSpace(distanceAfterCar, middlePositionDistanceAfterCar, id, "end"))
+                elif len(self.vehiclePosition) == 2:
+                    if count == 0:
+                        # if self.id == "gneE0_0":
+                        #     print("ID: " + id + " / P: " + str(position))
+                        distance = position - lengthVehicle
+                        middlePosition = distance / 2
+                        self.currentOpenSpace.append(OpenSpace(distance, middlePosition, "start", id))
+
+                    else:
+                            # if self.id == "gneE0_0":
+                            #     print("ID: " + id + " / P: " + str(position) + " / END: " + str(self.laneLength))
+                            distance = math.sqrt(((position - lengthVehicle) - previousPosition) ** 2)
+                            middlePosition = (position - lengthVehicle) - (distance / 2)
+                            self.currentOpenSpace.append(OpenSpace(distance, middlePosition, previousId, id))
+                            secondDistance = math.sqrt((self.laneLength - position) ** 2)
+                            secondMiddlePosition = self.laneLength - (secondDistance / 2)
+                            self.currentOpenSpace.append(OpenSpace(secondDistance, secondMiddlePosition, id, "end"))
 
                 else:
-                        if self.id == "gneE0_0":
-                            print("ID: " + id + " / P: " + str(position) + " / END: " + str(self.laneLength))
-                        distance = (position - lengthVehicle) - previousPosition
+                    if count == 0:
+                        # if self.id == "gneE0_0":
+                        #     print("ID: " + id + " / P: " + str(position))
+                        distance = position - lengthVehicle
+                        middlePosition = distance / 2
+                        self.currentOpenSpace.append(OpenSpace(distance, middlePosition, "start", id))
+                    elif count == len(self.vehiclePosition) - 1:
+                        # if self.id == "gneE0_0":
+                        #     print("ID: " + id + " / P: " + str(position) + " / END: " + str(self.laneLength))
+                        distance = math.sqrt(((position - lengthVehicle) - previousPosition) ** 2)
                         middlePosition = (position - lengthVehicle) - (distance / 2)
-                        self.currentOpenSpace.update({middlePosition : distance})
-                        secondDistance = self.laneLength - position
+                        self.currentOpenSpace.append(OpenSpace(distance, middlePosition, previousId, id))
+                        secondDistance = math.sqrt((self.laneLength - position) ** 2)
                         secondMiddlePosition = self.laneLength - (secondDistance / 2)
-                        self.currentOpenSpace.update({secondMiddlePosition : secondDistance})
+                        self.currentOpenSpace.append(OpenSpace(secondDistance, secondMiddlePosition, id, "end"))
+                    else:
+                        # if self.id == "gneE0_0":
+                        #     print("ID: " + id + " / PR: " + str(previousPosition) + " / P: " + str(position))
+                        distance = math.sqrt(((position - lengthVehicle) - previousPosition) ** 2)
+                        middlePosition = (position - lengthVehicle) - (distance / 2)
+                        self.currentOpenSpace.append(OpenSpace(distance, middlePosition, id, "end"))
 
-            else:
-                if count == 0:
-                    if self.id == "gneE0_0":
-                        print("ID: " + id + " / P: " + str(position))
-                    distance = position - (lengthVehicle / 2)
-                    middlePosition = distance / 2
-                    self.currentOpenSpace.update({middlePosition : distance})
-                elif count == len(self.vehiclePosition) - 1:
-                    if self.id == "gneE0_0":
-                        print("ID: " + id + " / P: " + str(position) + " / END: " + str(self.laneLength))
-                    distance = (position - lengthVehicle) - previousPosition
-                    middlePosition = (position - lengthVehicle) - (distance / 2)
-                    self.currentOpenSpace.update({middlePosition : distance})
-                    secondDistance = self.laneLength - position
-                    secondMiddlePosition = self.laneLength - (secondDistance / 2)
-                    self.currentOpenSpace.update({secondMiddlePosition : secondDistance})
-                else:
-                    if self.id == "gneE0_0":
-                        print("ID: " + id + " / PR: " + str(previousPosition) + " / P: " + str(position))
-                    distance = (position - lengthVehicle) - previousPosition
-                    middlePosition = (position - lengthVehicle) - (distance / 2)
-                    self.currentOpenSpace.update({middlePosition : distance})
+                previousId = id
+                previousPosition = position
+                count += 1
 
-            previousId = id
-            previousPosition = position
-            count += 1
+    def draw_OpenSpace(self):
+        for oldSpace in self.previousOpenSpace:
+            try:
+                traci.poi.remove(oldSpace.get_id(), 10)
+            except:
+                print("Can't remove space")
+        for space in self.currentOpenSpace:
+            middlePosition = space.get_middlePosition()
+            length = space.get_length()
+            print(space)
+            try:
+                traci.poi.add(space.get_id(), middlePosition, self.YCoordinate, (66,244,83), "line", 10)
+            except:
+
+                traci.poi.setPosition(space.get_id(), middlePosition, self.YCoordinate)
+            # shape = "line"
+            # position = [
+            #     (middlePosition - (length / 2), self.YCoordinate - 0.5),
+            #     (middlePosition - (length / 2), self.YCoordinate + 0.5),
+            #     (middlePosition + (length / 2), self.YCoordinate - 0.5),
+            #     (middlePosition + (length / 2), self.YCoordinate + 0.5)
+            # ]
+            # traci.polygon.add(space.get_id(), position, (66,244,83), True)
