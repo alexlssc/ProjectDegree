@@ -85,6 +85,9 @@ def main():
         while traci.simulation.getMinExpectedNumber() > 0:
             traci.simulationStep()
             allLanes.updateAllLanes()
+            if traci.simulation.getCurrentTime() == 30000:
+                print("ITS TIME")
+                allLanes.triggerLockedSpace(0)
             # print(traci.simulation.getCurrentTime())
             # print(allLanes.get_vehicleOnLaneForSpecificLane(0))
             # print(allLanes.get_openSpaceIDForSpecificLane(0))

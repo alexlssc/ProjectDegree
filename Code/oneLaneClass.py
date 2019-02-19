@@ -115,7 +115,7 @@ class oneLaneObject:
                         #     print("ID: " + id + " / PR: " + str(previousPosition) + " / P: " + str(position))
                         distance = math.sqrt(((position - lengthVehicle) - previousPosition) ** 2)
                         middlePosition = (position - lengthVehicle) - (distance / 2)
-                        self.currentOpenSpace.append(OpenSpace(distance, middlePosition, id, "end"))
+                        self.currentOpenSpace.append(OpenSpace(distance, middlePosition, previousId, id))
 
                 previousId = id
                 previousPosition = position
@@ -130,11 +130,9 @@ class oneLaneObject:
         for space in self.currentOpenSpace:
             middlePosition = space.get_middlePosition()
             length = space.get_length()
-            print(space)
             try:
                 traci.poi.add(space.get_id(), middlePosition, self.YCoordinate, (66,244,83), "line", 10)
             except:
-
                 traci.poi.setPosition(space.get_id(), middlePosition, self.YCoordinate)
             # shape = "line"
             # position = [
@@ -144,3 +142,16 @@ class oneLaneObject:
             #     (middlePosition + (length / 2), self.YCoordinate + 0.5)
             # ]
             # traci.polygon.add(space.get_id(), position, (66,244,83), True)
+
+    def moveSpaceToLockedList(self, spaceIndex):
+        self.lockedSpace.append(self.currentOpenSpace[spaceIndex])
+
+    def assureLockedSpace(self):
+        for space in self.lockedSpace:
+            backCar = space.get_backCar()
+            frontCar = space.get_frontCar()
+            print(space.get_length())
+            traci.vehicle.setAccel(str(backCar), 0.0)
+            traci.vehicle.setAccel(str(frontCar), 0.0)
+            traci.vehicle.setColor(str(backCar), (255,0,0))
+            traci.vehicle.setColor(str(frontCar), (255,0,0))

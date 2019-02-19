@@ -49,7 +49,11 @@ class AllLanes:
         listArrived = traci.simulation.getArrivedIDList()
         for lane in self.listOfLane:
             lane.updateOpenSpace(listArrived)
+            lane.assureLockedSpace()
             lane.draw_OpenSpace()
+
+    def triggerLockedSpace(self, laneId):
+        self.listOfLane[laneId].moveSpaceToLockedList(4)
 
     def get_listOfVehicle(self):
         return self.listOfVehicle

@@ -52,7 +52,7 @@ class OpenSpace:
         self.lockedSpace = new_locked_state
 
     def get_backCar(self):
-        return self.get_backCar
+        return self.backCar
 
     def set_backCar(self, new_backCar):
         self.backCar = new_backCar
