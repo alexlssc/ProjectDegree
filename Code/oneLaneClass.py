@@ -138,14 +138,6 @@ class oneLaneObject:
                 traci.poi.add(space.get_id(), middlePosition, self.YCoordinate, (66,244,83), "line", 10)
             except:
                 traci.poi.setPosition(space.get_id(), middlePosition, self.YCoordinate)
-            # shape = "line"
-            # position = [
-            #     (middlePosition - (length / 2), self.YCoordinate - 0.5),
-            #     (middlePosition - (length / 2), self.YCoordinate + 0.5),
-            #     (middlePosition + (length / 2), self.YCoordinate - 0.5),
-            #     (middlePosition + (length / 2), self.YCoordinate + 0.5)
-            # ]
-            # traci.polygon.add(space.get_id(), position, (66,244,83), True)
 
     def startLockingSpace(self, spaceIndex):
         self.gettingReadySpace.append(self.currentOpenSpace[spaceIndex])
