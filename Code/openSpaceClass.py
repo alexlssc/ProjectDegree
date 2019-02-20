@@ -28,8 +28,6 @@ class OpenSpace:
         combinedHashToBytes = bytes(backCarHash + frontCarHash, encoding="utf-8")
         self.id = hashlib.sha256(combinedHashToBytes).hexdigest()
 
-
-
     def get_id(self):
         return self.id
 

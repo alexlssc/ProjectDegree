@@ -31,7 +31,8 @@ class AllLanes:
         if listOfNewVehicleLoaded:
             for vehicle in listOfNewVehicleLoaded:
                 if not vehicle in self.listOfVehicle:
-                    self.listOfVehicle.append(Vehicle(vehicle,64))
+                    # previous changeLane Mode = 64
+                    self.listOfVehicle.append(Vehicle(vehicle,0))
 
     def get_listOfLane(self):
         return self.listOfLane
@@ -49,11 +50,12 @@ class AllLanes:
         listArrived = traci.simulation.getArrivedIDList()
         for lane in self.listOfLane:
             lane.updateOpenSpace(listArrived)
+            lane.preparingOpenSpace()
             lane.assureLockedSpace()
             lane.draw_OpenSpace()
 
     def triggerLockedSpace(self, laneId):
-        self.listOfLane[laneId].moveSpaceToLockedList(4)
+        self.listOfLane[laneId].startLockingSpace(4)
 
     def get_listOfVehicle(self):
         return self.listOfVehicle

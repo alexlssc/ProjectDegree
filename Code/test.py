@@ -8,5 +8,6 @@
 # totalHash = hashlib.sha256(bytesTotalHash).hexdigest()
 # print(totalHash)
 
-test2 = 5 ** 2
+test2 = 5.47272783
+test2 = round(test2, 3)
 print(str(test2))

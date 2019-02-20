@@ -21,6 +21,7 @@ class oneLaneObject:
         self.currentOpenSpace = []
         self.previousOpenSpace = []
         self.lockedSpace = []
+        self.gettingReadySpace = []
         self.vehiclePosition = {}
         self.laneLength = traci.lane.getLength(id)
         self.YCoordinate = YCoordinate
@@ -143,15 +144,41 @@ class oneLaneObject:
             # ]
             # traci.polygon.add(space.get_id(), position, (66,244,83), True)
 
-    def moveSpaceToLockedList(self, spaceIndex):
-        self.lockedSpace.append(self.currentOpenSpace[spaceIndex])
+    def startLockingSpace(self, spaceIndex):
+        self.gettingReadySpace.append(self.currentOpenSpace[spaceIndex])
+
+    def preparingOpenSpace(self):
+        for space in self.gettingReadySpace:
+            backCar = space.get_backCar()
+            frontCar = space.get_frontCar()
+            backCarSpeed = round(traci.vehicle.getSpeed(str(backCar)))
+            frontCarSpeed = round(traci.vehicle.getSpeed(str(frontCar)))
+            commonSpeed = round((backCarSpeed + frontCarSpeed) / 2)
+            totalDiffFromCommonSpeed = abs(commonSpeed - backCarSpeed) + abs(commonSpeed - frontCarSpeed)
+            #print("Space distance: " + str(space.get_length()) + " / BCS: " + str(backCarSpeed) + " / FCS: " + str(frontCarSpeed) + " / CS: " + str(commonSpeed) + " / TDS: " + str(totalDiffFromCommonSpeed))
+            if totalDiffFromCommonSpeed <= 1:
+                print("Equality reached")
+                self.lockedSpace.append(space)
+                self.gettingReadySpace.remove(space)
+            else:
+                traci.vehicle.setColor(str(backCar), (255,255,0))
+                traci.vehicle.setColor(str(frontCar), (255,255,0))
+                traci.vehicle.setAccel(str(backCar), 0.0)
+                traci.vehicle.setAccel(str(frontCar), 0.0)
+                traci.vehicle.setSpeed(str(backCar), commonSpeed)
+                traci.vehicle.setSpeed(str(frontCar), commonSpeed)
+
 
     def assureLockedSpace(self):
         for space in self.lockedSpace:
             backCar = space.get_backCar()
             frontCar = space.get_frontCar()
-            print(space.get_length())
+            commonSpeed = (traci.vehicle.getSpeed(str(backCar)) + traci.vehicle.getSpeed(str(frontCar))) / 2
+            # print("Space distance: " + str(space.get_length()) + " / BCS: " + str(traci.vehicle.getSpeed(str(backCar))) + "/ FCS: " + str(traci.vehicle.getSpeed(str(frontCar))) )
             traci.vehicle.setAccel(str(backCar), 0.0)
             traci.vehicle.setAccel(str(frontCar), 0.0)
+            traci.vehicle.setSpeed(str(backCar), commonSpeed)
+            traci.vehicle.setSpeed(str(frontCar), commonSpeed)
             traci.vehicle.setColor(str(backCar), (255,0,0))
             traci.vehicle.setColor(str(frontCar), (255,0,0))
+            traci.gui.trackVehicle('View #0', str(backCar))
