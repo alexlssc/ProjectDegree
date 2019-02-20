@@ -1,6 +1,7 @@
 import os
 import sys
 import hashlib
+import math
 from vehicleClass import Vehicle
 from oneLaneClass import oneLaneObject
 
@@ -56,6 +57,26 @@ class AllLanes:
 
     def triggerLockedSpace(self, laneId):
         self.listOfLane[laneId].startLockingSpace(4)
+
+    def triggerLeftChangeLane(self):
+        listOfVehicleOnLane = self.listOfLane[0].get_vehicleOnLane()
+        targetVehicle = listOfVehicleOnLane[3]
+        traci.vehicle.setColor(str(targetVehicle), (0,0,255))
+        nearestOpenSpace = self.findNearestSpace(targetVehicle, self.listOfLane[1].get_currentOpenSpace())
+        self.listOfLane[1].add_preparingLockedSpace(nearestOpenSpace)
+
+    def findNearestSpace(self, vehID, ListOpenSpaces):
+        listOfDistance = []
+        vehiclePosition = traci.vehicle.getLanePosition(vehID)
+        shortestDistanceScore = 999999
+        shortestSpace = None
+        for space in ListOpenSpaces:
+            spaceMiddlePosition = space.get_middlePosition()
+            distance = math.sqrt((vehiclePosition - spaceMiddlePosition) ** 2)
+            if distance < shortestDistanceScore:
+                shortestDistanceScore = distance
+                shortestSpace = space
+        return shortestSpace
 
     def get_listOfVehicle(self):
         return self.listOfVehicle

@@ -54,6 +54,9 @@ class oneLaneObject:
     def add_lockedSpace(self, spaceIndex):
         self.lockedSpace.append(self.get_currentOpenSpace[spaceIndex])
 
+    def add_preparingLockedSpace(self, space):
+        self.gettingReadySpace.append(space)
+
     def updateOpenSpace(self, listArrived):
         self.previousOpenSpace = self.currentOpenSpace
         self.currentOpenSpace = []
@@ -167,6 +170,7 @@ class oneLaneObject:
                 traci.vehicle.setAccel(str(frontCar), 0.0)
                 traci.vehicle.setSpeed(str(backCar), commonSpeed)
                 traci.vehicle.setSpeed(str(frontCar), commonSpeed)
+                traci.poi.setColor(space.get_id(), (0,0,255))
 
 
     def assureLockedSpace(self):
@@ -181,4 +185,5 @@ class oneLaneObject:
             traci.vehicle.setSpeed(str(frontCar), commonSpeed)
             traci.vehicle.setColor(str(backCar), (255,0,0))
             traci.vehicle.setColor(str(frontCar), (255,0,0))
+            traci.poi.setColor(space.get_id(), (255,0,0))
             traci.gui.trackVehicle('View #0', str(backCar))
