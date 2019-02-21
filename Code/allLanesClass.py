@@ -35,7 +35,7 @@ class AllLanes:
             for vehicle in listOfNewVehicleLoaded:
                 if not vehicle in self.listOfVehicle:
                     # previous changeLane Mode = 64
-                    self.listOfVehicle.append(Vehicle(vehicle,512))
+                    self.listOfVehicle.append(Vehicle(vehicle,256))
 
     def get_listOfLane(self):
         return self.listOfLane
@@ -81,15 +81,28 @@ class AllLanes:
     def findNearestSpace(self, vehID, ListOpenSpaces):
         listOfDistance = []
         vehiclePosition = traci.vehicle.getLanePosition(vehID)
+        vehicleLength = traci.vehicle.getLength(vehID)
         shortestDistanceScore = 999999
-        shortestSpace = None
+        closestMiddlePointSpace = None
+        adjacentSpace = None
+        bestNonAdjacentSpace = None
+        bestSpace = None
         for space in ListOpenSpaces:
             spaceMiddlePosition = space.get_middlePosition()
             distance = math.sqrt((vehiclePosition - spaceMiddlePosition) ** 2)
             if distance < shortestDistanceScore:
                 shortestDistanceScore = distance
-                shortestSpace = space
-        return shortestSpace
+                closestMiddlePointSpace = space
+                bestNonAdjacentSpace = space
+            if (vehiclePosition + vehicleLength + 5 > spaceMiddlePosition - (space.get_length() / 2)) and (vehiclePosition - 5 < spaceMiddlePosition + (space.get_length() / 2)):
+                adjacentSpace = space
+        if adjacentSpace is None:
+            bestSpace = bestNonAdjacentSpace
+            print("NonAdjPicked")
+        else:
+            bestSpace = adjacentSpace
+            print("AdjPicked")
+        return bestSpace
 
     def checkIfVehicleCanChangeLane(self):
         #print("size ALS: " + str(len(self.allLockedSpace)) + " / size LLV: " + str(len(self.listOfLockedVehicle)))
@@ -98,13 +111,14 @@ class AllLanes:
             targetOpenSpace = self.allLockedSpace[0]
             targetOpenSpace.changeColor((255,0,0))
             middlePositionOpenSpace = targetOpenSpace.get_middlePosition()
-            distance = math.sqrt((carPosition - middlePositionOpenSpace) ** 2)
+            distance = abs(carPosition - middlePositionOpenSpace)
             #print("carPosition:" + str(carPosition) + " / middlePositionOpenSpace: " + str(middlePositionOpenSpace) + " / D:" + str(distance))
-            if distance < targetOpenSpace.get_length() / 2:
+            if distance < (targetOpenSpace.get_length() / 2):
                 # print("Lane change occured at " + traci.simulation.getCurrentTime() )
                 print("Change Land done")
                 traci.vehicle.changeLaneRelative(self.listOfLockedVehicle[0], 1, 2.0)
                 traci.vehicle.setSpeed(self.listOfLockedVehicle[0], -1)
+                self.listOfLockedVehicle.remove(self.listOfLockedVehicle[0])
                 self.unlockSpace(targetOpenSpace)
 
     def unlockSpace(self, space):
