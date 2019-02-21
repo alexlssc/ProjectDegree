@@ -64,7 +64,6 @@ class AllLanes:
             if allLockedSpace:
                 for space in allLockedSpace:
                     self.allLockedSpace.append(space)
-
             lane.draw_OpenSpace()
 
     def triggerLockedSpace(self, laneId):

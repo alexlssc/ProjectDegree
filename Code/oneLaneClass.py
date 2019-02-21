@@ -126,13 +126,8 @@ class oneLaneObject:
                 count += 1
 
     def updateLockedSpace(self):
-
         for currentSpace in self.currentOpenSpace:
             for lockedSpace in self.lockedSpace:
-                if lockedSpace not in self.currentOpenSpace:
-                    traci.vehicle.setSpeed(lockedSpace.get_backCar(), -1)
-                    traci.vehicle.setSpeed(lockedSpace.get_frontCar(), -1)
-                    self.lockedSpace.remove(lockedSpace)
                 if currentSpace == lockedSpace:
                     lockedSpace.updateValues(currentSpace)
 
@@ -156,6 +151,10 @@ class oneLaneObject:
 
     def unlockSpace(self, space):
         if space in self.lockedSpace:
+            traci.vehicle.setSpeed(space.get_backCar(), -1)
+            traci.vehicle.setColor(space.get_backCar(), (255,255,0))
+            traci.vehicle.setSpeed(space.get_frontCar(), -1)
+            traci.vehicle.setColor(space.get_frontCar(), (255,255,0))
             self.lockedSpace.remove(space)
 
     def preparingOpenSpace(self):
