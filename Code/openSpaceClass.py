@@ -67,7 +67,20 @@ class OpenSpace:
         else:
             return "Unknown"
 
+    def changeColor(self, color):
+        try:
+            traci.poi.setColor(self.id, color)
+        except:
+            print("Can't draw")
+
     def update_velocity(self, new_middlePosition):
         self.previousMiddlePosition = self.middlePosition
         self.middlePosition = new_middlePosition
         self.velocity = self.middlePosition - self.previousMiddlePosition # since simulation step is every second
+
+    def updateValues(self, other):
+        self.middlePosition = other.middlePosition
+        self.length = other.length
+
+    def __eq__(self, other):
+        return self.id == other.id

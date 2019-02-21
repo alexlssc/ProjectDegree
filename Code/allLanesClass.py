@@ -21,6 +21,8 @@ class AllLanes:
         self.listOfVehicle = []
         self.listOfLane = []
         self.listOfYCoordinate = [-14.85, -11.55, -8.25, -4.45, -1.65]
+        self.allLockedSpace = []
+        self.listOfLockedVehicle = []
         for i in range(self.numberOfLane):
             laneId = "gneE0_" + str(i)
             self.listOfLane.append(oneLaneObject(laneId, self.listOfYCoordinate[i]))
@@ -33,7 +35,7 @@ class AllLanes:
             for vehicle in listOfNewVehicleLoaded:
                 if not vehicle in self.listOfVehicle:
                     # previous changeLane Mode = 64
-                    self.listOfVehicle.append(Vehicle(vehicle,0))
+                    self.listOfVehicle.append(Vehicle(vehicle,512))
 
     def get_listOfLane(self):
         return self.listOfLane
@@ -47,12 +49,22 @@ class AllLanes:
     def get_vehicleOnLaneForSpecificLane(self, laneId):
         return self.listOfLane[laneId].get_vehicleOnLane()
 
+    def get_listOfVehicle(self):
+        return self.listOfVehicle
+
     def updateAllLanes(self):
         listArrived = traci.simulation.getArrivedIDList()
         for lane in self.listOfLane:
             lane.updateOpenSpace(listArrived)
+            lane.updateLockedSpace()
             lane.preparingOpenSpace()
             lane.assureLockedSpace()
+            allLockedSpace = []
+            allLockedSpace = lane.get_lockedSpace()
+            if allLockedSpace:
+                for space in allLockedSpace:
+                    self.allLockedSpace.append(space)
+
             lane.draw_OpenSpace()
 
     def triggerLockedSpace(self, laneId):
@@ -61,7 +73,9 @@ class AllLanes:
     def triggerLeftChangeLane(self):
         listOfVehicleOnLane = self.listOfLane[0].get_vehicleOnLane()
         targetVehicle = listOfVehicleOnLane[3]
+        self.listOfLockedVehicle.append(targetVehicle)
         traci.vehicle.setColor(str(targetVehicle), (0,0,255))
+        traci.gui.trackVehicle('View #0', targetVehicle)
         nearestOpenSpace = self.findNearestSpace(targetVehicle, self.listOfLane[1].get_currentOpenSpace())
         self.listOfLane[1].add_preparingLockedSpace(nearestOpenSpace)
 
@@ -78,5 +92,28 @@ class AllLanes:
                 shortestSpace = space
         return shortestSpace
 
-    def get_listOfVehicle(self):
-        return self.listOfVehicle
+    def checkIfVehicleCanChangeLane(self):
+        #print("size ALS: " + str(len(self.allLockedSpace)) + " / size LLV: " + str(len(self.listOfLockedVehicle)))
+        if self.allLockedSpace and self.listOfLockedVehicle:
+            carPosition = traci.vehicle.getLanePosition(self.listOfLockedVehicle[0])
+            targetOpenSpace = self.allLockedSpace[0]
+            targetOpenSpace.changeColor((255,0,0))
+            middlePositionOpenSpace = targetOpenSpace.get_middlePosition()
+            distance = math.sqrt((carPosition - middlePositionOpenSpace) ** 2)
+            #print("carPosition:" + str(carPosition) + " / middlePositionOpenSpace: " + str(middlePositionOpenSpace) + " / D:" + str(distance))
+            if distance < targetOpenSpace.get_length() / 2:
+                # print("Lane change occured at " + traci.simulation.getCurrentTime() )
+                print("Change Land done")
+                traci.vehicle.changeLaneRelative(self.listOfLockedVehicle[0], 1, 2.0)
+                traci.vehicle.setSpeed(self.listOfLockedVehicle[0], -1)
+                self.unlockSpace(targetOpenSpace)
+
+    def unlockSpace(self, space):
+        self.allLockedSpace.remove(space)
+        for lane in self.listOfLane:
+            lane.unlockSpace(space)
+
+    def handlesAllManoeuvres(self):
+        self.keepTrackOfNewVehicle()
+        self.updateAllLanes()
+        self.checkIfVehicleCanChangeLane()

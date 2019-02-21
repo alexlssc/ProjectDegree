@@ -84,7 +84,7 @@ def main():
         allLanes = AllLanes()
         while traci.simulation.getMinExpectedNumber() > 0:
             traci.simulationStep()
-            allLanes.updateAllLanes()
+            allLanes.handlesAllManoeuvres()
             # Trigger a locked space for testing purposes
             # if traci.simulation.getCurrentTime() == 20000:
             #     traci.vehicle.setColor("2", (0,0,255))

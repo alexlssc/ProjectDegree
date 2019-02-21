@@ -125,6 +125,18 @@ class oneLaneObject:
                 previousPosition = position
                 count += 1
 
+    def updateLockedSpace(self):
+
+        for currentSpace in self.currentOpenSpace:
+            for lockedSpace in self.lockedSpace:
+                if lockedSpace not in self.currentOpenSpace:
+                    traci.vehicle.setSpeed(lockedSpace.get_backCar(), -1)
+                    traci.vehicle.setSpeed(lockedSpace.get_frontCar(), -1)
+                    self.lockedSpace.remove(lockedSpace)
+                if currentSpace == lockedSpace:
+                    lockedSpace.updateValues(currentSpace)
+
+
     def draw_OpenSpace(self):
         for oldSpace in self.previousOpenSpace:
             try:
@@ -141,6 +153,10 @@ class oneLaneObject:
 
     def startLockingSpace(self, spaceIndex):
         self.gettingReadySpace.append(self.currentOpenSpace[spaceIndex])
+
+    def unlockSpace(self, space):
+        if space in self.lockedSpace:
+            self.lockedSpace.remove(space)
 
     def preparingOpenSpace(self):
         for space in self.gettingReadySpace:
@@ -162,7 +178,7 @@ class oneLaneObject:
                 traci.vehicle.setAccel(str(frontCar), 0.0)
                 traci.vehicle.setSpeed(str(backCar), commonSpeed)
                 traci.vehicle.setSpeed(str(frontCar), commonSpeed)
-                traci.poi.setColor(space.get_id(), (0,0,255))
+                # traci.poi.setColor(space.get_id(), (0,0,255))
 
 
     def assureLockedSpace(self):
@@ -177,5 +193,4 @@ class oneLaneObject:
             traci.vehicle.setSpeed(str(frontCar), commonSpeed)
             traci.vehicle.setColor(str(backCar), (255,0,0))
             traci.vehicle.setColor(str(frontCar), (255,0,0))
-            traci.poi.setColor(space.get_id(), (255,0,0))
-            traci.gui.trackVehicle('View #0', str(backCar))
+            # traci.poi.setColor(space.get_id(), (255,0,0))
