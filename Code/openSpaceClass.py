@@ -27,6 +27,9 @@ class OpenSpace:
         frontCarHash = hashlib.sha256(frontCarIDToBytes).hexdigest()
         combinedHashToBytes = bytes(backCarHash + frontCarHash, encoding="utf-8")
         self.id = hashlib.sha256(combinedHashToBytes).hexdigest()
+        self.safeDistance = None
+        self.landingLength = None
+        self.growing = False
 
     def get_id(self):
         return self.id
@@ -66,6 +69,32 @@ class OpenSpace:
             return self.velocity
         else:
             return "Unknown"
+
+    def get_safeDistance(self):
+        if self.safeDistance is not None:
+            return self.safeDistance
+        else:
+            return -1
+
+    def set_safeDistance(self, backVehicleOneSecSpeed, frontVehicleOneSecSpeed):
+        backCarSafeDistance = (backVehicleOneSecSpeed ** 2) / (2 * 0.7 * 9.8)
+        frontCarSafeDistance = (backVehicleOneSecSpeed ** 2) / (2 * 0.7 * 9.8)
+        self.safeDistance = backCarSafeDistance + frontCarSafeDistance
+
+    def get_landingLength(self):
+        if self.landingLength is not None:
+            return self.landingLength
+        else:
+            return -1
+
+    def update_landingLength(self):
+        self.landingLength = self.length - self.safeDistance
+
+    def get_growing(self):
+        return self.growing
+
+    def set_growing(self, new_value):
+        self.growing = new_value
 
     def changeColor(self, color):
         try:

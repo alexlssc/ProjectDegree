@@ -28,7 +28,8 @@ numberOfSimulation = 1
 
 sumoBinary = "/Users/alexandrelissac/Documents/SUMO/bin/sumo-gui"
 for i in range(numberOfSimulation):
-    randomSeed = str(randint(0,900))
+    #randomSeed = str(randint(0,900))
+    randomSeed = "468"
     sumoCmd = [sumoBinary, "-c", "/Users/alexandrelissac/Desktop/Project/Simulation/Resources/FiveLanes/100v.sumocfg", "--lanechange-output", "lanechange.xml" ,"--seed", randomSeed , "--output-prefix", str(i),"--quit-on-end"]
     listOfSimulation.append(sumoCmd)
 
@@ -82,19 +83,12 @@ def main():
     for idx, simulation in enumerate(listOfSimulation):
         traci.start(simulation)
         allLanes = AllLanes()
+        print(str(randomSeed))
         while traci.simulation.getMinExpectedNumber() > 0:
             traci.simulationStep()
             allLanes.handlesAllManoeuvres()
-            # Trigger a locked space for testing purposes
-            # if traci.simulation.getCurrentTime() == 20000:
-            #     traci.vehicle.setColor("2", (0,0,255))
-            #     traci.gui.trackVehicle('View #0', "2")
-            # if traci.simulation.getCurrentTime() == 22000:
-            #     traci.vehicle.changeLaneRelative("2", 1, 2.0)
             if traci.simulation.getCurrentTime() == 30000:
                 allLanes.triggerLeftChangeLane()
-                #allLanes.triggerLockedSpace(0)
-        traci.close(True)
     dirName = convertXMLintoCSV() # Convert and get directory of new folder
     time.sleep(3) # Wait for computer to save converted csv file
     analyseResults(dirName)

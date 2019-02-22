@@ -125,12 +125,21 @@ class oneLaneObject:
                 previousPosition = position
                 count += 1
 
+    def reduceLargeOpenSpace(self):
+        for currentSpace in self.currentOpenSpace:
+            if currentSpace not in self.lockedSpace and currentSpace not in self.gettingReadySpace:
+                lengthSpace = currentSpace.get_length()
+                print(lengthSpace)
+                if lengthSpace > 300:
+                    if currentSpace.get_backCar() is not "start":
+                        print("ACCEL")
+                        traci.vehicle.slowDown(currentSpace.get_backCar(), traci.vehicle.getSpeed(currentSpace.get_backCar()) + 1, 2)
+
     def updateLockedSpace(self):
         for currentSpace in self.currentOpenSpace:
             for lockedSpace in self.lockedSpace:
                 if currentSpace == lockedSpace:
                     lockedSpace.updateValues(currentSpace)
-
 
     def draw_OpenSpace(self):
         for oldSpace in self.previousOpenSpace:
@@ -151,45 +160,97 @@ class oneLaneObject:
 
     def unlockSpace(self, space):
         if space in self.lockedSpace:
-            traci.vehicle.setSpeed(space.get_backCar(), -1)
-            traci.vehicle.setColor(space.get_backCar(), (255,255,0))
-            traci.vehicle.setSpeed(space.get_frontCar(), -1)
-            traci.vehicle.setColor(space.get_frontCar(), (255,255,0))
+            if space.get_backCar() is not "start":
+                traci.vehicle.setSpeed(space.get_backCar(), -1)
+                traci.vehicle.setColor(space.get_backCar(), (255,255,0))
+            if space.get_frontCar() is not "end":
+                traci.vehicle.setSpeed(space.get_frontCar(), -1)
+                traci.vehicle.setColor(space.get_frontCar(), (255,255,0))
             self.lockedSpace.remove(space)
 
     def preparingOpenSpace(self):
         for space in self.gettingReadySpace:
+            # print("First Growing: " + str(space.get_growing()))
             backCar = space.get_backCar()
             frontCar = space.get_frontCar()
-            backCarSpeed = round(traci.vehicle.getSpeed(str(backCar)))
-            frontCarSpeed = round(traci.vehicle.getSpeed(str(frontCar)))
-            commonSpeed = round((backCarSpeed + frontCarSpeed) / 2)
-            totalDiffFromCommonSpeed = abs(commonSpeed - backCarSpeed) + abs(commonSpeed - frontCarSpeed)
-            #print("Space distance: " + str(space.get_length()) + " / BCS: " + str(backCarSpeed) + " / FCS: " + str(frontCarSpeed) + " / CS: " + str(commonSpeed) + " / TDS: " + str(totalDiffFromCommonSpeed))
-            if totalDiffFromCommonSpeed <= 1:
-                print("Equality reached")
-                self.lockedSpace.append(space)
-                self.gettingReadySpace.remove(space)
-            else:
-                traci.vehicle.setColor(str(backCar), (255,255,0))
-                traci.vehicle.setColor(str(frontCar), (255,255,0))
-                traci.vehicle.setAccel(str(backCar), 0.0)
-                traci.vehicle.setAccel(str(frontCar), 0.0)
-                traci.vehicle.setSpeed(str(backCar), commonSpeed)
-                traci.vehicle.setSpeed(str(frontCar), commonSpeed)
-                # traci.poi.setColor(space.get_id(), (0,0,255))
+            if not space.get_growing():
+                # print("Locking attempt")
+                if backCar is not "start" and frontCar is not "end":
+                    frontCarSpeed = round(traci.vehicle.getSpeed(str(frontCar)))
+                    backCarSpeed = round(traci.vehicle.getSpeed(str(backCar)))
+                    lockSpeed = round((backCarSpeed + frontCarSpeed) / 2)
+                    totalDiffFromCommonSpeed = abs(lockSpeed - backCarSpeed) + abs(lockSpeed - frontCarSpeed)
+                else:
+                    if backCar is "start":
+                        frontCarSpeed = round(traci.vehicle.getSpeed(str(frontCar)))
+                    if frontCar is "end":
+                        backCarSpeed = round(traci.vehicle.getSpeed(str(backCar)))
+                    totalDiffFromCommonSpeed = 0
+                print("Space distance: " + str(space.get_length()) + " / BCS: " + str(backCarSpeed) + " / FCS: " + str(frontCarSpeed) + " / CS: " + str(lockSpeed) + " / TDS: " + str(totalDiffFromCommonSpeed))
+                if totalDiffFromCommonSpeed <= 1:
+                    # print("Equality reached")
+                    if backCar is not "start" and frontCar is not "end":
+                        space.set_safeDistance(lockSpeed, lockSpeed)
+                    else:
+                        if backCar is "start":
+                            space.set_safeDistance(0, frontCarSpeed)
+                        if frontCar is "end":
+                            space.set_safeDistance(backCarSpeed, 0)
+                    space.update_landingLength()
+                    #print("Growing: " + str(space.get_growing()) + " / Length: " + str(space.get_length()) + " / SD: " + str(space.get_safeDistance()) + " / LL: " + str(space.get_landingLength()))
+                    if space.get_landingLength() >= 10:
+                        self.lockedSpace.append(space)
+                        self.gettingReadySpace.remove(space)
+                    else:
+                        space.set_growing(True)
+                else:
+                    traci.vehicle.setColor(str(backCar), (255,0,255))
+                    traci.vehicle.setColor(str(frontCar), (255,0,255))
+                    # traci.vehicle.setAccel(str(backCar), 0.0)
+                    # traci.vehicle.setAccel(str(frontCar), 0.0)
+                    traci.vehicle.setSpeed(str(backCar), lockSpeed)
+                    traci.vehicle.setSpeed(str(frontCar), lockSpeed)
+            else: #else of is_growing
+                if backCar is not "start":
+                    backCarSpeed = traci.vehicle.getSpeed(str(backCar))
+                    print("True BS: " + str(backCarSpeed))
+                    traci.vehicle.slowDown(str(backCar), backCarSpeed - 1, 2)
+                if frontCar is not "end":
+                    frontCarSpeed = traci.vehicle.getSpeed(str(frontCar))
+                    print("True FS: " + str(frontCarSpeed))
+                    traci.vehicle.slowDown(str(backCar), frontCarSpeed + 1, 2)
+                if backCar is not "start" and frontCar is not "end":
+                    space.set_safeDistance(backCarSpeed, frontCarSpeed)
+                else:
+                    if backCar is "start":
+                        space.set_safeDistance(0,frontCarSpeed)
+                    if frontCar is "end":
+                        space.set_safeDistance(backCarSpeed, 0)
+                space.update_landingLength()
+                #print("Growing: " + str(space.get_growing()) + " / Length: " + str(space.get_length()) + " / SD: " + str(space.get_safeDistance()) + " / LL: " + str(space.get_landingLength()))
+                if space.get_landingLength() >= 10:
+                    self.lockedSpace.append(space)
+                    self.gettingReadySpace.remove(space)
 
 
     def assureLockedSpace(self):
         for space in self.lockedSpace:
             backCar = space.get_backCar()
             frontCar = space.get_frontCar()
-            commonSpeed = (traci.vehicle.getSpeed(str(backCar)) + traci.vehicle.getSpeed(str(frontCar))) / 2
-            # print("Space distance: " + str(space.get_length()) + " / BCS: " + str(traci.vehicle.getSpeed(str(backCar))) + "/ FCS: " + str(traci.vehicle.getSpeed(str(frontCar))) )
-            traci.vehicle.setAccel(str(backCar), 0.0)
-            traci.vehicle.setAccel(str(frontCar), 0.0)
-            traci.vehicle.setSpeed(str(backCar), commonSpeed)
-            traci.vehicle.setSpeed(str(frontCar), commonSpeed)
-            traci.vehicle.setColor(str(backCar), (255,0,0))
-            traci.vehicle.setColor(str(frontCar), (255,0,0))
+            #commonSpeed = (traci.vehicle.getSpeed(str(backCar)) + traci.vehicle.getSpeed(str(frontCar))) / 2
+            print("Space distance: " + str(space.get_length()) + " / BCS: " + str(traci.vehicle.getSpeed(str(backCar))) + "/ FCS: " + str(traci.vehicle.getSpeed(str(frontCar))) )
+            # traci.vehicle.setAccel(str(backCar), 0.0)
+            # traci.vehicle.setAccel(str(frontCar), 0.0)
+            if backCar is not "start":
+                traci.vehicle.setSpeed(str(backCar), round(traci.vehicle.getSpeed(backCar)))
+            if frontCar is not "end":
+                traci.vehicle.setSpeed(str(frontCar), round(traci.vehicle.getSpeed(frontCar)))
+            try:
+                traci.vehicle.setColor(str(backCar), (255,0,0))
+            except:
+                print("Can't draw")
+            try:
+                traci.vehicle.setColor(str(frontCar), (255,0,0))
+            except:
+                print("Can't draw")
             # traci.poi.setColor(space.get_id(), (255,0,0))
