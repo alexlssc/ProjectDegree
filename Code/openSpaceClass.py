@@ -20,6 +20,20 @@ class OpenSpace:
         self.velocity = None
         self.backCar = backCar
         self.frontCar = frontCar
+        if backCar is not "start":
+            self.backCarSpeed = traci.vehicle.getSpeed(backCar)
+        else:
+            self.backCarSpeed = 0
+        if frontCar is not "end":
+            self.frontCarSpeed = traci.vehicle.getSpeed(frontCar)
+        else:
+            self.frontCarSpeed = 0
+        if self.backCarSpeed < self.frontCarSpeed:
+            self.growth = 1
+        elif self.backCarSpeed > self.frontCarSpeed:
+            self.growth = -1
+        else:
+            self.growth = 0
         self.lockedSpace = False
         backCarIDToBytes = bytes(backCar, encoding="utf-8")
         frontCarIDToBytes = bytes(frontCar, encoding="utf-8")
@@ -82,10 +96,15 @@ class OpenSpace:
         self.safeDistance = backCarSafeDistance + frontCarSafeDistance
 
     def get_landingLength(self):
-        if self.landingLength is not None:
-            return self.landingLength
-        else:
-            return -1
+        self.updateSpeedVehicles()
+        self.set_safeDistance(self.backCarSpeed, self.frontCarSpeed)
+        return self.length - self.get_safeDistance()
+
+    def updateSpeedVehicles(self):
+        if self.backCar is not "start":
+            self.backCarSpeed = traci.vehicle.getSpeed(self.backCar)
+        if self.frontCar is not "end":
+            self.frontCarSpeed = traci.vehicle.getSpeed(self.frontCar)
 
     def update_landingLength(self):
         self.landingLength = self.length - self.safeDistance
@@ -95,6 +114,9 @@ class OpenSpace:
 
     def set_growing(self, new_value):
         self.growing = new_value
+
+    def get_growth(self):
+        return self.growth
 
     def changeColor(self, color):
         try:

@@ -8,14 +8,6 @@
 # totalHash = hashlib.sha256(bytesTotalHash).hexdigest()
 # print(totalHash)
 
-from openSpaceClass import OpenSpace
+test1 = round(234.23321 , 2)
 
-os1 = OpenSpace(20, 10, '5', '8')
-os2 = OpenSpace(30, 20, '4', '9')
-
-listOs = [os1]
-
-if os2 in listOs:
-    print("YES")
-else:
-    print("NO")
+print(str(test1))

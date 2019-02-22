@@ -173,12 +173,14 @@ class oneLaneObject:
             # print("First Growing: " + str(space.get_growing()))
             backCar = space.get_backCar()
             frontCar = space.get_frontCar()
+            if space.get_landingLength() < 0:
+                space.set_growing(True)
             if not space.get_growing():
                 # print("Locking attempt")
                 if backCar is not "start" and frontCar is not "end":
-                    frontCarSpeed = round(traci.vehicle.getSpeed(str(frontCar)))
-                    backCarSpeed = round(traci.vehicle.getSpeed(str(backCar)))
-                    lockSpeed = round((backCarSpeed + frontCarSpeed) / 2)
+                    frontCarSpeed = traci.vehicle.getSpeed(str(frontCar))
+                    backCarSpeed = traci.vehicle.getSpeed(str(backCar))
+                    lockSpeed = (backCarSpeed + frontCarSpeed) / 2
                     totalDiffFromCommonSpeed = abs(lockSpeed - backCarSpeed) + abs(lockSpeed - frontCarSpeed)
                 else:
                     if backCar is "start":
@@ -187,7 +189,7 @@ class oneLaneObject:
                         backCarSpeed = round(traci.vehicle.getSpeed(str(backCar)))
                     totalDiffFromCommonSpeed = 0
                 print("Space distance: " + str(space.get_length()) + " / BCS: " + str(backCarSpeed) + " / FCS: " + str(frontCarSpeed) + " / CS: " + str(lockSpeed) + " / TDS: " + str(totalDiffFromCommonSpeed))
-                if totalDiffFromCommonSpeed <= 1:
+                if totalDiffFromCommonSpeed < 0.01:
                     # print("Equality reached")
                     if backCar is not "start" and frontCar is not "end":
                         space.set_safeDistance(lockSpeed, lockSpeed)
@@ -214,11 +216,11 @@ class oneLaneObject:
                 if backCar is not "start":
                     backCarSpeed = traci.vehicle.getSpeed(str(backCar))
                     print("True BS: " + str(backCarSpeed))
-                    traci.vehicle.slowDown(str(backCar), backCarSpeed - 1, 2)
+                    traci.vehicle.setSpeed(str(backCar), backCarSpeed - 0.3)
                 if frontCar is not "end":
                     frontCarSpeed = traci.vehicle.getSpeed(str(frontCar))
                     print("True FS: " + str(frontCarSpeed))
-                    traci.vehicle.slowDown(str(backCar), frontCarSpeed + 1, 2)
+                    traci.vehicle.setSpeed(str(frontCar), frontCarSpeed + 0.3)
                 if backCar is not "start" and frontCar is not "end":
                     space.set_safeDistance(backCarSpeed, frontCarSpeed)
                 else:
@@ -242,9 +244,12 @@ class oneLaneObject:
             # traci.vehicle.setAccel(str(backCar), 0.0)
             # traci.vehicle.setAccel(str(frontCar), 0.0)
             if backCar is not "start":
-                traci.vehicle.setSpeed(str(backCar), round(traci.vehicle.getSpeed(backCar)))
+                traci.vehicle.setSpeed(str(backCar), traci.vehicle.getSpeed(backCar))
             if frontCar is not "end":
-                traci.vehicle.setSpeed(str(frontCar), round(traci.vehicle.getSpeed(frontCar)))
+                traci.vehicle.setSpeed(str(frontCar), traci.vehicle.getSpeed(frontCar))
+            if backCar is not "start" and frontCar is not "end":
+                traci.vehicle.setSpeed(str(backCar), traci.vehicle.getSpeed(frontCar))
+                traci.vehicle.setSpeed(str(frontCar), traci.vehicle.getSpeed(frontCar))
             try:
                 traci.vehicle.setColor(str(backCar), (255,0,0))
             except:
@@ -253,4 +258,3 @@ class oneLaneObject:
                 traci.vehicle.setColor(str(frontCar), (255,0,0))
             except:
                 print("Can't draw")
-            # traci.poi.setColor(space.get_id(), (255,0,0))

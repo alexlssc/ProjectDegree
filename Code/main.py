@@ -28,8 +28,8 @@ numberOfSimulation = 1
 
 sumoBinary = "/Users/alexandrelissac/Documents/SUMO/bin/sumo-gui"
 for i in range(numberOfSimulation):
-    #randomSeed = str(randint(0,900))
-    randomSeed = "468"
+    randomSeed = str(randint(0,900))
+    #randomSeed = "886"
     sumoCmd = [sumoBinary, "-c", "/Users/alexandrelissac/Desktop/Project/Simulation/Resources/FiveLanes/100v.sumocfg", "--lanechange-output", "lanechange.xml" ,"--seed", randomSeed , "--output-prefix", str(i),"--quit-on-end"]
     listOfSimulation.append(sumoCmd)
 
