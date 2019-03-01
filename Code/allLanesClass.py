@@ -108,11 +108,11 @@ class AllLanes:
                 frontCarSpeed = 0
             # Use vehicle speed to detect safe distance between cars
             # In this case, safe distance = braking distance
-            backCarSafeDistance = (backCarSpeed ** 2) / (2 * 0.7 * 9.8)
-            frontCarSafeDistance = (frontCarSpeed ** 2) / (2 * 0.7 * 9.8)
+            backCarSafeDistance = (backCarSpeed ** 2) / (254 * 0.7 )
+            frontCarSafeDistance = (frontCarSpeed ** 2) / (254 * 0.7)
             safeDistance = backCarSafeDistance + frontCarSafeDistance
             if distance < shortestDistanceScore: # If new distance shorter than currentBest
-                # print("ID: " + space.get_id() + " / " + str(distance) + " / " + str(space.get_length() - safeDistance) + " / " + str(spaceMiddlePosition) + " / " + str(space.get_length() / 2) + " / " + str(space.get_growth()))
+                print("ID: " + space.get_id() + " / " + str(distance) + " / " + str(space.get_length() - safeDistance) + " / " + str(spaceMiddlePosition) + " / " + str(space.get_length() / 2) + " / " + str(space.get_growth()))
                 if (space.get_length() - safeDistance) >= 5: # check if car has enough room to fit in open space
                     # Yes, this space become currentBest
                     shortestDistanceScore = distance
