@@ -1,7 +1,6 @@
 import os
 import sys
 import hashlib
-import asyncio
 
 if 'SUMO_HOME' in os.environ:
     tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
@@ -93,8 +92,8 @@ class OpenSpace:
     # workout safe distance between vehicle for space
     def set_safeDistance(self, backVehicleOneSecSpeed, frontVehicleOneSecSpeed):
         # using braking distance formula to calculate safe distance
-        backCarSafeDistance = (backVehicleOneSecSpeed ** 2) / (2 * 0.7 * 9.8)
-        frontCarSafeDistance = (backVehicleOneSecSpeed ** 2) / (2 * 0.7 * 9.8)
+        backCarSafeDistance = (backVehicleOneSecSpeed ** 2) / (254 * 0.7)
+        frontCarSafeDistance = (backVehicleOneSecSpeed ** 2) / (254 * 0.7)
         self.safeDistance = backCarSafeDistance + frontCarSafeDistance
 
     def get_landingLength(self):

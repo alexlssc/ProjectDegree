@@ -1,5 +1,4 @@
 import os
-
 import sys
 
 if 'SUMO_HOME' in os.environ:
