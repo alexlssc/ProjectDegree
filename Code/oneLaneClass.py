@@ -203,7 +203,7 @@ class oneLaneObject:
                     # update the landing length
                     space.update_landingLength()
                     #print("Growing: " + str(space.get_growing()) + " / Length: " + str(space.get_length()) + " / SD: " + str(space.get_safeDistance()) + " / LL: " + str(space.get_landingLength()))
-                    if space.get_landingLength() >= 5: # decide if space can welcome car after speed locked
+                    if space.get_landingLength() >= 7: # decide if space can welcome car after speed locked
                         self.lockedSpace.append(space) # lock the space
                         self.gettingReadySpace.remove(space) # remove from preparing list
                     else: # space can not welcome the car anymore
@@ -234,7 +234,7 @@ class oneLaneObject:
                 # get the new landing length value
                 space.update_landingLength()
                 #print("Growing: " + str(space.get_growing()) + " / Length: " + str(space.get_length()) + " / SD: " + str(space.get_safeDistance()) + " / LL: " + str(space.get_landingLength()))
-                if space.get_landingLength() >= 5: # Decide if car can welcome the car
+                if space.get_landingLength() >= 7: # Decide if car can welcome the car
                     self.lockedSpace.append(space) # lock the space
                     self.gettingReadySpace.remove(space) # remove from preparing list
 

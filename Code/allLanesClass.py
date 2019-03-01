@@ -112,7 +112,7 @@ class AllLanes:
             frontCarSafeDistance = (frontCarSpeed ** 2) / (254 * 0.7)
             safeDistance = backCarSafeDistance + frontCarSafeDistance
             if distance < shortestDistanceScore: # If new distance shorter than currentBest
-                print("ID: " + space.get_id() + " / " + str(distance) + " / " + str(space.get_length() - safeDistance) + " / " + str(spaceMiddlePosition) + " / " + str(space.get_length() / 2) + " / " + str(space.get_growth()))
+                #print("ID: " + space.get_id() + " / " + str(distance) + " / " + str(space.get_length() - safeDistance) + " / " + str(spaceMiddlePosition) + " / " + str(space.get_length() / 2) + " / " + str(space.get_growth()))
                 if (space.get_length() - safeDistance) >= 5: # check if car has enough room to fit in open space
                     # Yes, this space become currentBest
                     shortestDistanceScore = distance
@@ -134,16 +134,17 @@ class AllLanes:
     def checkIfVehicleCanChangeLane(self):
         #print("size ALS: " + str(len(self.allLockedSpace)) + " / size LLV: " + str(len(self.listOfLockedVehicle)))
         if self.allLockedSpace and self.listOfLockedVehicle:
-            carPosition = traci.vehicle.getLanePosition(self.listOfLockedVehicle[0])
+            carPosition = traci.vehicle.getLanePosition(self.listOfLockedVehicle[0]) + traci.vehicle.getSpeed(self.listOfLockedVehicle[0])
+
             targetOpenSpace = self.allLockedSpace[0]
             targetOpenSpace.changeColor((255,0,0))
             middlePositionOpenSpace = targetOpenSpace.get_middlePosition()
             distance = abs(carPosition - middlePositionOpenSpace) # get the distance between car and space's middle position
             # print("carPosition:" + str(carPosition) + " / middlePositionOpenSpace: " + str(middlePositionOpenSpace) + " / D:" + str(distance))
-            print("Accepted distance: " + str(targetOpenSpace.get_landingLength()) + " / distance:" + str(distance))
+            print("Accepted distance: " + str(targetOpenSpace.get_landingLength() / 2) + " / distance:" + str(distance))
 
             # Verify that cars is close enough to the space's middlePosition to insert into itself into space
-            if distance < targetOpenSpace.get_landingLength():
+            if distance < targetOpenSpace.get_landingLength() / 2:
                 # print("Lane change occured at " + traci.simulation.getCurrentTime() )
                 # print("Change Lane done")
                 traci.vehicle.changeLaneRelative(self.listOfLockedVehicle[0], 1, 2.0) # Start manoeuvre to change lane
