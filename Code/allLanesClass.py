@@ -86,7 +86,7 @@ class AllLanes:
     # find best nearest open space and return it
     def findNearestSpace(self, vehID, ListOpenSpaces):
         # Get vehicle properties
-        vehiclePosition = traci.vehicle.getLanePosition(vehID)
+        vehiclePosition = traci.vehicle.getLanePosition(vehID) + traci.vehicle.getSpeed(vehID)
         vehicleLength = traci.vehicle.getLength(vehID)
         # Initialise fitness score and fitness value
         shortestDistanceScore = 999999
