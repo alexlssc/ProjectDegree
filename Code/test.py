@@ -8,6 +8,10 @@
 # totalHash = hashlib.sha256(bytesTotalHash).hexdigest()
 # print(totalHash)
 
-test1 = round(234.23321 , 2)
-
-print(str(test1))
+def predictLockedSpaceLength(self):
+    backCarPosition = 5
+    frontCarPosition = 20
+    backCarSpeed = 23
+    frontCarSpeed = 20
+    carDecel = 4.5
+    carAccel = 2.5

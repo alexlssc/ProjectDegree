@@ -125,10 +125,17 @@ class OpenSpace:
         except:
             print("Can't draw")
 
-    def update_velocity(self, new_middlePosition):
-        self.previousMiddlePosition = self.middlePosition
-        self.middlePosition = new_middlePosition
-        self.velocity = self.middlePosition - self.previousMiddlePosition # since simulation step is every second
+    def get_velocity(self):
+        if self.backCar is not "start":
+            backCarSpeed = traci.vehicle.getSpeed(self.backCar)
+        else:
+            backCarSpeed = 0
+        if self.frontCar is not "end":
+            frontCarSpeed = traci.vehicle.getSpeed(self.frontCar)
+        else:
+            frontCarSpeed = 0
+        self.velocity = (backCarSpeed + frontCarSpeed) / 2
+        return self.velocity
 
     def updateValues(self, other):
         self.middlePosition = other.middlePosition

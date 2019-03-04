@@ -95,47 +95,57 @@ class AllLanes:
         for space in ListOpenSpaces:
             spaceMiddlePosition = space.get_middlePosition()
             distance = math.sqrt((vehiclePosition - spaceMiddlePosition) ** 2) # Get the distance between car and middle point
+            relativeDistance = spaceMiddlePosition - vehiclePosition
             backCar = space.get_backCar()
             frontCar = space.get_frontCar()
-            # get vehicle speed
-            if backCar is not "start":
-                backCarSpeed = traci.vehicle.getSpeed(space.get_backCar())
+            print("ID: " + space.get_id() + " / " + str(relativeDistance) + " / " + str(space.get_landingLength()) + " / " + str(spaceMiddlePosition) + " / " + str(space.get_length() / 2) + " / " + str(space.get_growth()) + " / " + str(space.get_velocity()))
+            if relativeDistance > 0:
+                if space.get_velocity() < traci.lane.getMaxSpeed(traci.vehicle.getLaneID(vehID)):
+                    if distance < shortestDistanceScore: # If new distance shorter than currentBest
+                        if space.get_landingLength() >= 5: # check if car has enough room to fit in open space
+                            # Yes, this space become currentBest
+                            shortestDistanceScore = distance
+                            closestMiddlePointSpace = space
+                            bestNonAdjacentSpace = space
+                        else:
+                            # Check if space could still be considered even though not enough room for car
+                            # Check if the space growth needed to welcome car is not bigger than 30 and if the space is currently growing
+                            # get_growth() is the difference between the speed of the backCar and the frontCar
+                            # if backCarSpeed > frontCarSpeed than space is shrinking otherwise it is growing
+                            if space.get_landingLength() > -30 and space.get_growth() == 1:
+                                # yes, space can be considered and become currentBest
+                                shortestDistanceScore = distance
+                                closestMiddlePointSpace = space
+                                bestNonAdjacentSpace = space
             else:
-                backCarSpeed = 0
-            if frontCar is not "end":
-                frontCarSpeed = traci.vehicle.getSpeed(space.get_frontCar())
-            else:
-                frontCarSpeed = 0
-            # Use vehicle speed to detect safe distance between cars
-            # In this case, safe distance = braking distance
-            backCarSafeDistance = (backCarSpeed ** 2) / (254 * 0.7 )
-            frontCarSafeDistance = (frontCarSpeed ** 2) / (254 * 0.7)
-            safeDistance = backCarSafeDistance + frontCarSafeDistance
-            if distance < shortestDistanceScore: # If new distance shorter than currentBest
-                #print("ID: " + space.get_id() + " / " + str(distance) + " / " + str(space.get_length() - safeDistance) + " / " + str(spaceMiddlePosition) + " / " + str(space.get_length() / 2) + " / " + str(space.get_growth()))
-                if (space.get_length() - safeDistance) >= 5: # check if car has enough room to fit in open space
-                    # Yes, this space become currentBest
-                    shortestDistanceScore = distance
-                    closestMiddlePointSpace = space
-                    bestNonAdjacentSpace = space
-                else:
-                    # Check if space could still be considered even though not enough room for car
-                    # Check if the space growth needed to welcome car is not bigger than 30 and if the space is currently growing
-                    # get_growth() is the difference between the speed of the backCar and the frontCar
-                    # if backCarSpeed > frontCarSpeed than space is shrinking otherwise it is growing
-                    if space.get_length() - safeDistance > -30 and space.get_growth() == 1:
-                        # yes, space can be considered and become currentBest
+                if distance < shortestDistanceScore: # If new distance shorter than currentBest
+                    if space.get_landingLength() >= 5: # check if car has enough room to fit in open space
+                        # Yes, this space become currentBest
                         shortestDistanceScore = distance
                         closestMiddlePointSpace = space
                         bestNonAdjacentSpace = space
+                    else:
+                        # Check if space could still be considered even though not enough room for car
+                        # Check if the space growth needed to welcome car is not bigger than 30 and if the space is currently growing
+                        # get_growth() is the difference between the speed of the backCar and the frontCar
+                        # if backCarSpeed > frontCarSpeed than space is shrinking otherwise it is growing
+                        if space.get_landingLength() > -30 and space.get_growth() == 1:
+                            # yes, space can be considered and become currentBest
+                            shortestDistanceScore = distance
+                            closestMiddlePointSpace = space
+                            bestNonAdjacentSpace = space
 
         return bestNonAdjacentSpace
+
+    def predictLockedSpaceLength(self, backCar, frontCar):
+        backCarPosition = traci.vehicle.getLanePosition(backCar)
+        frontCarPosition = traci.vehicle.getLanePosition(frontCar)
 
     def checkIfVehicleCanChangeLane(self):
         #print("size ALS: " + str(len(self.allLockedSpace)) + " / size LLV: " + str(len(self.listOfLockedVehicle)))
         if self.allLockedSpace and self.listOfLockedVehicle:
             carPosition = traci.vehicle.getLanePosition(self.listOfLockedVehicle[0]) + traci.vehicle.getSpeed(self.listOfLockedVehicle[0])
-
+            #print("Max Speed: " + str(traci.lane.getMaxSpeed('gneE0_0')) + " / CurrentSpeed: " + str(traci.vehicle.getSpeed(self.listOfLockedVehicle[0])))
             targetOpenSpace = self.allLockedSpace[0]
             targetOpenSpace.changeColor((255,0,0))
             middlePositionOpenSpace = targetOpenSpace.get_middlePosition()
