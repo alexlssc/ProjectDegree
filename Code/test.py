@@ -15,3 +15,5 @@ def predictLockedSpaceLength(self):
     frontCarSpeed = 20
     carDecel = 4.5
     carAccel = 2.5
+
+    

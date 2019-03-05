@@ -57,6 +57,9 @@ class oneLaneObject:
     def add_preparingLockedSpace(self, space):
         self.gettingReadySpace.append(space)
 
+    def get_maxSpeedOnLane(self):
+        return traci.lane.getMaxSpeed(self.id)
+
     # Detect all the open spaces of the lane
     def updateOpenSpace(self, listArrived):
         self.previousOpenSpace = self.currentOpenSpace
@@ -126,6 +129,7 @@ class oneLaneObject:
                 previousId = id
                 previousPosition = position
                 count += 1
+
 
     # Update values of all locked space
     def updateLockedSpace(self):
@@ -244,9 +248,7 @@ class oneLaneObject:
             backCar = space.get_backCar()
             frontCar = space.get_frontCar()
             #commonSpeed = (traci.vehicle.getSpeed(str(backCar)) + traci.vehicle.getSpeed(str(frontCar))) / 2
-            print("Space distance: " + str(space.get_length()) + " / BCS: " + str(traci.vehicle.getSpeed(str(backCar))) + "/ FCS: " + str(traci.vehicle.getSpeed(str(frontCar))) )
-            # traci.vehicle.setAccel(str(backCar), 0.0)
-            # traci.vehicle.setAccel(str(frontCar), 0.0)
+            #print("Space distance: " + str(space.get_length()) + " / BCS: " + str(traci.vehicle.getSpeed(str(backCar))) + "/ FCS: " + str(traci.vehicle.getSpeed(str(frontCar))) )
             if backCar is not "start":
                 traci.vehicle.setSpeed(str(backCar), traci.vehicle.getSpeed(backCar))
             if frontCar is not "end":
