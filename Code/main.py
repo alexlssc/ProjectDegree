@@ -87,6 +87,7 @@ def main():
             traci.simulationStep()
             if traci.vehicle.getLeader("1", 0) is not None:
                 print(str(traci.vehicle.getLeader("1", 0)[0]))
+            #This is a test
             allLanes.handlesAllManoeuvres()
             if traci.simulation.getCurrentTime() == 30000:
                 allLanes.triggerRightChangeLane()
