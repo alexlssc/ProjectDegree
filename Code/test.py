@@ -8,12 +8,6 @@
 # totalHash = hashlib.sha256(bytesTotalHash).hexdigest()
 # print(totalHash)
 
-def predictLockedSpaceLength(self):
-    backCarPosition = 5
-    frontCarPosition = 20
-    backCarSpeed = 23
-    frontCarSpeed = 20
-    carDecel = 4.5
-    carAccel = 2.5
-
-    
+test = "gneE0_4"
+character = test[len(test) - 1]
+print(character)

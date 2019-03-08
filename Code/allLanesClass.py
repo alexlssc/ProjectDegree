@@ -57,6 +57,7 @@ class AllLanes:
         listArrived = traci.simulation.getArrivedIDList()
         for lane in self.listOfLane:
             lane.updateOpenSpace(listArrived) # Keep track of all open space
+            lane.updatePreparingSpace() # Update values of locked spaces
             lane.updateLockedSpace() # Update values of locked spaces
             lane.preparingOpenSpace() # Prepare future locked spaces
             lane.assureLockedSpace() # Assure that locked spaces stays lockde
@@ -75,25 +76,28 @@ class AllLanes:
 
     # Trigger random left change
     def triggerLeftChangeLane(self):
-        listOfVehicleOnLane = self.listOfLane[0].get_vehicleOnLane()
-        targetVehicle = listOfVehicleOnLane[3] # Get a vehicle on lane 0
+        targetVehicle = "15" # Get a vehicle on lane 0
+        targetVehicleCurrentLane = traci.vehicle.getLaneID(targetVehicle)
+        targetVehicleLaneIndex = int(targetVehicleCurrentLane[len(targetVehicleCurrentLane) - 1])
+        # listOfVehicleOnLane = self.listOfLane[int(targetVehicleCurrentLane[len(targetVehicleCurrentLane) - 1])].get_vehicleOnLane()
         traci.vehicle.setSpeed(targetVehicle, traci.vehicle.getSpeed(targetVehicle))
         self.listOfLockedVehicle.append((targetVehicle, "left")) # Keep track of the vehicle
         traci.vehicle.setColor(str(targetVehicle), (0,0,255)) #Set its color for GUI
         traci.gui.trackVehicle('View #0', targetVehicle) # Center camera on it
-        nearestOpenSpace = self.findNearestSpace(targetVehicle, self.listOfLane[1].get_currentOpenSpace(), "left") # Find its best nearest open space
-        self.listOfLane[1].add_preparingLockedSpace(nearestOpenSpace) # Prepare that open Space
+        nearestOpenSpace = self.findNearestSpace(targetVehicle, self.listOfLane[targetVehicleLaneIndex + 1].get_currentOpenSpace(), "left") # Find its best nearest open space
+        self.listOfLane[targetVehicleLaneIndex + 1].add_preparingLockedSpace(nearestOpenSpace) # Prepare that open Space
 
     # Trigger random left change
     def triggerRightChangeLane(self):
-        listOfVehicleOnLane = self.listOfLane[3].get_vehicleOnLane()
-        targetVehicle = listOfVehicleOnLane[3] # Get a vehicle on lane 3
+        targetVehicle = "15"
+        targetVehicleCurrentLane = traci.vehicle.getLaneID(targetVehicle)
+        targetVehicleLaneIndex = int(targetVehicleCurrentLane[len(targetVehicleCurrentLane) - 1])
         traci.vehicle.setSpeed(targetVehicle, traci.vehicle.getSpeed(targetVehicle))
         self.listOfLockedVehicle.append((targetVehicle, "right")) # Keep track of the vehicle
         traci.vehicle.setColor(str(targetVehicle), (0,0,255)) #Set its color for GUI
         traci.gui.trackVehicle('View #0', targetVehicle) # Center camera on it
-        nearestOpenSpace = self.findNearestSpace(targetVehicle, self.listOfLane[2].get_currentOpenSpace(), "right") # Find its best nearest open space
-        self.listOfLane[2].add_preparingLockedSpace(nearestOpenSpace) # Prepare that open Space
+        nearestOpenSpace = self.findNearestSpace(targetVehicle, self.listOfLane[targetVehicleLaneIndex - 1].get_currentOpenSpace(), "right") # Find its best nearest open space
+        self.listOfLane[targetVehicleLaneIndex - 1].add_preparingLockedSpace(nearestOpenSpace) # Prepare that open Space
 
     # find best nearest open space and return it
     def findNearestSpace(self, vehID, ListOpenSpaces, direction):
@@ -161,14 +165,11 @@ class AllLanes:
             targetOpenSpace = self.allLockedSpace[0]
             targetOpenSpace.changeColor((255,0,0))
             middlePositionOpenSpace = targetOpenSpace.get_middlePosition()
-            distance = abs(carPosition - middlePositionOpenSpace) # get the distance between car and space's middle position
+            distance = abs((carPosition - traci.vehicle.getLength(self.listOfLockedVehicle[0][0])) - middlePositionOpenSpace) # get the distance between car and space's middle position
             # print("carPosition:" + str(carPosition) + " / middlePositionOpenSpace: " + str(middlePositionOpenSpace) + " / D:" + str(distance))
-            print("Accepted distance: " + str(targetOpenSpace.get_landingLength() / 2) + " / distance:" + str(distance))
-
+            print(str(carPosition) + " / " + str(middlePositionOpenSpace) + " / " + str(middlePositionOpenSpace - (targetOpenSpace.get_landingLength() / 2)) + " / " + str(middlePositionOpenSpace + (targetOpenSpace.get_landingLength() / 2)) + " / " + str(targetOpenSpace.get_length()) + " / " + str(targetOpenSpace.get_safeDistance()))
             # Verify that cars is close enough to the space's middlePosition to insert into itself into space
-            if distance + traci.vehicle.getLength(self.listOfLockedVehicle[0][0]) < targetOpenSpace.get_landingLength() / 2:
-                # print("Lane change occured at " + traci.simulation.getCurrentTime() )
-                # print("Change Lane done")
+            if carPosition > middlePositionOpenSpace - (targetOpenSpace.get_landingLength() / 2) and carPosition < middlePositionOpenSpace + (targetOpenSpace.get_landingLength() / 2):
                 if self.listOfLockedVehicle[0][1] is "left":
                     traci.vehicle.changeLaneRelative(self.listOfLockedVehicle[0][0], 1, 2.0) # Start manoeuvre to change lane
                 elif self.listOfLockedVehicle[0][1] is "right":
