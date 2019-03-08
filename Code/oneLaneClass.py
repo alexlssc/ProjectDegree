@@ -138,6 +138,12 @@ class oneLaneObject:
                 if currentSpace == lockedSpace: #currentSpace is lockedSpace
                     lockedSpace.updateValues(currentSpace)
 
+    def updatePreparingSpace(self):
+        for currentSpace in self.currentOpenSpace:
+            for preparedSpace in self.gettingReadySpace:
+                if currentSpace == preparedSpace:
+                    preparedSpace.updateValues(currentSpace)
+
     # Draw all open spaces' middle position
     def draw_OpenSpace(self):
         for oldSpace in self.previousOpenSpace:

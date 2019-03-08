@@ -57,6 +57,7 @@ class AllLanes:
         listArrived = traci.simulation.getArrivedIDList()
         for lane in self.listOfLane:
             lane.updateOpenSpace(listArrived) # Keep track of all open space
+            lane.updatePreparingSpace() # Update values of locked spaces
             lane.updateLockedSpace() # Update values of locked spaces
             lane.preparingOpenSpace() # Prepare future locked spaces
             lane.assureLockedSpace() # Assure that locked spaces stays lockde
@@ -166,7 +167,7 @@ class AllLanes:
             print("Accepted distance: " + str(targetOpenSpace.get_landingLength() / 2) + " / distance:" + str(distance))
 
             # Verify that cars is close enough to the space's middlePosition to insert into itself into space
-            if distance + traci.vehicle.getLength(self.listOfLockedVehicle[0][0]) < targetOpenSpace.get_landingLength() / 2:
+            if carPosition > middlePositionOpenSpace - (targetOpenSpace.get_landingLength() / 2) and carPosition < middlePositionOpenSpace + (targetOpenSpace.get_landingLength() / 2):
                 # print("Lane change occured at " + traci.simulation.getCurrentTime() )
                 # print("Change Lane done")
                 if self.listOfLockedVehicle[0][1] is "left":

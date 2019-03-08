@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on Fri Mar  8 16:04:20 2019 by Eclipse SUMO GUI Version 1.0.1
+<!-- generated on Fri Mar  8 21:01:42 2019 by Eclipse SUMO GUI Version 1.0.1
 <configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
 
     <input>
@@ -25,11 +25,11 @@
     </report>
 
     <traci_server>
-        <remote-port value="55159"/>
+        <remote-port value="61694"/>
     </traci_server>
 
     <random_number>
-        <seed value="62"/>
+        <seed value="634"/>
     </random_number>
 
     <gui_only>
@@ -40,8 +40,7 @@
 -->
 
 <lanechanges>
-    <change id="1" type="DEFAULT_VEHTYPE" time="7.00" from="gneE0_1" to="gneE0_0" dir="-1" speed="10.57" pos="42.05" reason="keepRight" leaderGap="None" leaderSecureGap="None" followerGap="30.45" followerSecureGap="0.00" origLeaderGap="None" origLeaderSecureGap="None"/>
-    <change id="0" type="DEFAULT_VEHTYPE" time="8.00" from="gneE0_2" to="gneE0_1" dir="-1" speed="13.81" pos="67.59" reason="keepRight" leaderGap="None" leaderSecureGap="None" followerGap="34.72" followerSecureGap="0.00" origLeaderGap="None" origLeaderSecureGap="None"/>
-    <change id="0" type="DEFAULT_VEHTYPE" time="18.00" from="gneE0_1" to="gneE0_0" dir="-1" speed="25.09" pos="288.60" reason="keepRight" leaderGap="None" leaderSecureGap="None" followerGap="20.75" followerSecureGap="18.02" origLeaderGap="None" origLeaderSecureGap="None"/>
-    <change id="13" type="DEFAULT_VEHTYPE" time="32.00" from="gneE0_3" to="gneE0_2" dir="-1" speed="22.69" pos="295.64" reason="traci|urgent" leaderGap="None" leaderSecureGap="None" followerGap="None" followerSecureGap="None" origLeaderGap="None" origLeaderSecureGap="None"/>
+    <change id="1" type="DEFAULT_VEHTYPE" time="7.00" from="gneE0_2" to="gneE0_1" dir="-1" speed="12.06" pos="46.56" reason="keepRight" leaderGap="None" leaderSecureGap="None" followerGap="24.64" followerSecureGap="0.00" origLeaderGap="None" origLeaderSecureGap="None"/>
+    <change id="1" type="DEFAULT_VEHTYPE" time="20.00" from="gneE0_1" to="gneE0_0" dir="-1" speed="21.60" pos="308.53" reason="keepRight" leaderGap="28.85" leaderSecureGap="10.79" followerGap="28.17" followerSecureGap="21.22" origLeaderGap="None" origLeaderSecureGap="None"/>
+    <change id="14" type="DEFAULT_VEHTYPE" time="32.00" from="gneE0_3" to="gneE0_2" dir="-1" speed="22.69" pos="299.01" reason="traci|urgent" leaderGap="190.61" leaderSecureGap="0.00" followerGap="59.04" followerSecureGap="56.03" origLeaderGap="155.54" origLeaderSecureGap="0.84"/>
 </lanechanges>
