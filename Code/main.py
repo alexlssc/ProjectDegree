@@ -27,8 +27,8 @@ numberOfSimulation = 1
 
 sumoBinary = "/Users/alexandrelissac/Documents/SUMO/bin/sumo-gui"
 for i in range(numberOfSimulation):
-    #randomSeed = str(randint(0,900))
-    randomSeed = "463"
+    randomSeed = str(randint(0,900))
+    #randomSeed = "463"
     sumoCmd = [sumoBinary, "-c", "../Resources/FiveLanes/100v.sumocfg", "--lanechange-output", "lanechange.xml" ,"--seed", randomSeed , "--output-prefix", str(i),"--quit-on-end"]
     listOfSimulation.append(sumoCmd)
 
@@ -85,8 +85,6 @@ def main():
         print(str(randomSeed))
         while traci.simulation.getMinExpectedNumber() > 0:
             traci.simulationStep()
-            if traci.vehicle.getLeader("1", 0) is not None:
-                print(str(traci.vehicle.getLeader("1", 0)[0]))
             allLanes.handlesAllManoeuvres()
             if traci.simulation.getCurrentTime() == 30000:
                 allLanes.triggerRightChangeLane()
