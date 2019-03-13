@@ -86,6 +86,11 @@ def main():
         while traci.simulation.getMinExpectedNumber() > 0:
             traci.simulationStep()
             allLanes.handlesAllManoeuvres()
+            try:
+                print(traci.vehicle.getBestLanes("10"))
+            except Exception as e:
+                print(str(e))
+
             if traci.simulation.getCurrentTime() == 30000:
                 allLanes.triggerRightChangeLane()
             if traci.simulation.getCurrentTime() == 20000:

@@ -7,7 +7,3 @@
 # bytesTotalHash = bytes(backCarHash + frontCarHash, encoding="utf-8")
 # totalHash = hashlib.sha256(bytesTotalHash).hexdigest()
 # print(totalHash)
-
-test = "gneE0_4"
-character = test[len(test) - 1]
-print(character)
