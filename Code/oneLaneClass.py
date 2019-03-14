@@ -83,15 +83,15 @@ class oneLaneObject:
                     distanceAfterCar = self.laneLength - position
                     middlePositionDistanceBeforeCar = distanceBeforeCar / 2
                     middlePositionDistanceAfterCar = self.laneLength - (distanceAfterCar / 2)
-                    self.currentOpenSpace.append(OpenSpace(distanceBeforeCar, middlePositionDistanceBeforeCar, "start", id))
-                    self.currentOpenSpace.append(OpenSpace(distanceAfterCar, middlePositionDistanceAfterCar, id, "end"))
+                    self.currentOpenSpace.append(OpenSpace(distanceBeforeCar, middlePositionDistanceBeforeCar, "start-" + self.id, id))
+                    self.currentOpenSpace.append(OpenSpace(distanceAfterCar, middlePositionDistanceAfterCar, id, "end-" + self.id))
                 elif len(self.vehiclePosition) == 2: # Two cars on the lane
                     if count == 0: # First car on the lane / Closest to start
                         # if self.id == "gneE0_0":
                         #     print("ID: " + id + " / P: " + str(position))
                         distance = position - lengthVehicle
                         middlePosition = distance / 2
-                        self.currentOpenSpace.append(OpenSpace(distance, middlePosition, "start", id))
+                        self.currentOpenSpace.append(OpenSpace(distance, middlePosition, "start-" + self.id, id))
 
                     else: # Last car on the lane / Closest to end
                             # if self.id == "gneE0_0":
@@ -101,7 +101,7 @@ class oneLaneObject:
                             self.currentOpenSpace.append(OpenSpace(distance, middlePosition, previousId, id))
                             secondDistance = math.sqrt((self.laneLength - position) ** 2)
                             secondMiddlePosition = self.laneLength - (secondDistance / 2)
-                            self.currentOpenSpace.append(OpenSpace(secondDistance, secondMiddlePosition, id, "end"))
+                            self.currentOpenSpace.append(OpenSpace(secondDistance, secondMiddlePosition, id, "end-" + self.id))
 
                 else: # More than two cars on the lane
                     if count == 0: # First car on the lane / Closest to start
@@ -109,7 +109,7 @@ class oneLaneObject:
                         #     print("ID: " + id + " / P: " + str(position))
                         distance = position - lengthVehicle
                         middlePosition = distance / 2
-                        self.currentOpenSpace.append(OpenSpace(distance, middlePosition, "start", id))
+                        self.currentOpenSpace.append(OpenSpace(distance, middlePosition, "start-" + self.id, id))
                     elif count == len(self.vehiclePosition) - 1: # Last car on the lane / Closest to end
                         # if self.id == "gneE0_0":
                         #     print("ID: " + id + " / P: " + str(position) + " / END: " + str(self.laneLength))
@@ -118,7 +118,7 @@ class oneLaneObject:
                         self.currentOpenSpace.append(OpenSpace(distance, middlePosition, previousId, id))
                         secondDistance = math.sqrt((self.laneLength - position) ** 2)
                         secondMiddlePosition = self.laneLength - (secondDistance / 2)
-                        self.currentOpenSpace.append(OpenSpace(secondDistance, secondMiddlePosition, id, "end"))
+                        self.currentOpenSpace.append(OpenSpace(secondDistance, secondMiddlePosition, id, "end-" + self.id))
                     else: # Any middle car on the lane
                         # if self.id == "gneE0_0":
                         #     print("ID: " + id + " / PR: " + str(previousPosition) + " / P: " + str(position))
@@ -166,12 +166,18 @@ class oneLaneObject:
     # Unlock expired locked spaces
     def unlockSpace(self, space):
         if space in self.lockedSpace:
-            if space.get_backCar() is not "start": # backCar needs to be a vehicle
-                traci.vehicle.setSpeed(space.get_backCar(), -1) # Give speed's control back to sumo
-                traci.vehicle.setColor(space.get_backCar(), (255,255,0)) # Set color back to yellow
-            if space.get_frontCar() is not "end": # frontCar needs to be a vehicle
-                traci.vehicle.setSpeed(space.get_frontCar(), -1) # Give speed's control back to sumo
-                traci.vehicle.setColor(space.get_frontCar(), (255,255,0)) # Set color back to yellow
+            if space.get_backCar()[0] is not 's': # backCar needs to be a vehicle
+                try:
+                    traci.vehicle.setSpeed(space.get_backCar(), -1) # Give speed's control back to sumo
+                    traci.vehicle.setColor(space.get_backCar(), (255,255,0)) # Set color back to yellow
+                except Exception as e:
+                    print(str(e))
+            if space.get_frontCar()[0] is not 'e': # frontCar needs to be a vehicle
+                try:
+                    traci.vehicle.setSpeed(space.get_frontCar(), -1) # Give speed's control back to sumo
+                    traci.vehicle.setColor(space.get_frontCar(), (255,255,0)) # Set color back to yellow
+                except Exception as e:
+                    print(str(e))
             self.lockedSpace.remove(space) # remove locked space from list
 
     # Prepare future locked space
@@ -184,18 +190,29 @@ class oneLaneObject:
                 space.set_growing(True) # declare space is growing
             if not space.get_growing(): # if space is not growing / can welcome car straight away
                 # print("Locking attempt")
-                if backCar is not "start" and frontCar is not "end": # both front and back are vehicle
+                if backCar[0] is not 's' and frontCar[0] is not 'e': # both front and back are vehicle
                     # get both speed
-                    frontCarSpeed = traci.vehicle.getSpeed(str(frontCar))
-                    backCarSpeed = traci.vehicle.getSpeed(str(backCar))
+                    try:
+                        frontCarSpeed = traci.vehicle.getSpeed(str(frontCar))
+                    except Exception as e:
+                        print(str(e) + " / preparingSpace")
+                        self.gettingReadySpace.remove(space)
+                        return
+
+                    try:
+                        backCarSpeed = traci.vehicle.getSpeed(str(backCar))
+                    except Exception as e:
+                        print(str(e) + " / preparingSpace")
+                        self.gettingReadySpace.remove(space)
+                        return
                     # average it to get the target locked speed
                     lockSpeed = (backCarSpeed + frontCarSpeed) / 2
                     # get speed difference between front and back car
                     totalDiffFromCommonSpeed = abs(lockSpeed - backCarSpeed) + abs(lockSpeed - frontCarSpeed)
                 else:
-                    if backCar is "start":
+                    if backCar[0] is 's':
                         frontCarSpeed = round(traci.vehicle.getSpeed(str(frontCar)))
-                    if frontCar is "end":
+                    if frontCar[0] is 'e':
                         backCarSpeed = round(traci.vehicle.getSpeed(str(backCar)))
                     totalDiffFromCommonSpeed = 0
                 # print("Space distance: " + str(space.get_length()) + " / BCS: " + str(backCarSpeed) + " / FCS: " + str(frontCarSpeed) + " / CS: " + str(lockSpeed) + " / TDS: " + str(totalDiffFromCommonSpeed))
@@ -203,12 +220,12 @@ class oneLaneObject:
                     # print("Equality reached")
 
                     # workout the new safety distance between vehicles
-                    if backCar is not "start" and frontCar is not "end":
+                    if backCar[0] is not 's' and frontCar[0] is not 'e':
                         space.set_safeDistance(lockSpeed, lockSpeed)
                     else:
-                        if backCar is "start":
+                        if backCar[0] is 's':
                             space.set_safeDistance(0, frontCarSpeed)
-                        if frontCar is "end":
+                        if frontCar[0] is 'e':
                             space.set_safeDistance(backCarSpeed, 0)
                     # update the landing length
                     space.update_landingLength()
@@ -226,20 +243,28 @@ class oneLaneObject:
                     traci.vehicle.setSpeed(str(backCar), lockSpeed)
                     traci.vehicle.setSpeed(str(frontCar), lockSpeed)
             else: #else of is_growing
-                if backCar is not "start":
-                    backCarSpeed = traci.vehicle.getSpeed(str(backCar))
-                    print("True BS: " + str(backCarSpeed))
+                if backCar[0] is not 's':
+                    try:
+                        backCarSpeed = traci.vehicle.getSpeed(str(backCar))
+                    except Exception as e:
+                        print(str(e) + " / preparingSpace")
+                        self.gettingReadySpace.remove(space)
+                        return
                     traci.vehicle.setSpeed(str(backCar), backCarSpeed - 0.3)
-                if frontCar is not "end":
-                    frontCarSpeed = traci.vehicle.getSpeed(str(frontCar))
-                    print("True FS: " + str(frontCarSpeed))
+                if frontCar[0] is not 'e':
+                    try:
+                        frontCarSpeed = traci.vehicle.getSpeed(str(frontCar))
+                    except Exception as e:
+                        print(str(e) + " / preparingSpace")
+                        self.gettingReadySpace.remove(space)
+                        return
                     traci.vehicle.setSpeed(str(frontCar), frontCarSpeed + 0.3)
-                if backCar is not "start" and frontCar is not "end":
+                if backCar[0] is not 's' and frontCar[0] is not 'e':
                     space.set_safeDistance(backCarSpeed, frontCarSpeed)
                 else:
-                    if backCar is "start":
+                    if backCar[0] is 's':
                         space.set_safeDistance(0,frontCarSpeed)
-                    if frontCar is "end":
+                    if frontCar[0] is 'e':
                         space.set_safeDistance(backCarSpeed, 0)
                 # get the new landing length value
                 space.update_landingLength()
@@ -247,6 +272,10 @@ class oneLaneObject:
                 if space.get_landingLength() >= 7: # Decide if car can welcome the car
                     self.lockedSpace.append(space) # lock the space
                     self.gettingReadySpace.remove(space) # remove from preparing list
+                    if space.get_backCar()[0] is not 's':
+                        traci.vehicle.setColor(space.get_backCar(), (255, 255,0))
+                    if space.get_frontCar()[0] is not 'e':
+                        traci.vehicle.setColor(space.get_frontCar(), (255,255,0))
 
     # Assure that locked space stays intact
     def assureLockedSpace(self):
@@ -255,15 +284,31 @@ class oneLaneObject:
             frontCar = space.get_frontCar()
             #commonSpeed = (traci.vehicle.getSpeed(str(backCar)) + traci.vehicle.getSpeed(str(frontCar))) / 2
             #print("Space distance: " + str(space.get_length()) + " / BCS: " + str(traci.vehicle.getSpeed(str(backCar))) + "/ FCS: " + str(traci.vehicle.getSpeed(str(frontCar))) )
-            if backCar is not "start":
-                traci.vehicle.setSpeed(str(backCar), traci.vehicle.getSpeed(backCar))
-            if frontCar is not "end":
-                traci.vehicle.setSpeed(str(frontCar), traci.vehicle.getSpeed(frontCar))
-            if backCar is not "start" and frontCar is not "end": # space between two vehicles
+            if backCar[0] is not 's':
+                try:
+                    traci.vehicle.setSpeed(str(backCar), traci.vehicle.getSpeed(backCar))
+                except Exception as e:
+                    print(str(e))
+                    return
+            if frontCar[0] is not 'e':
+                try:
+                    traci.vehicle.setSpeed(str(frontCar), traci.vehicle.getSpeed(frontCar))
+                except Exception as e:
+                    print(str(e))
+                    return
+            if backCar[0] is not 's' and frontCar[0] is not 'e': # space between two vehicles
                 # back car adapts its speed to front car
                 # allows space to keep same length even though there is a slow down ahead
-                traci.vehicle.setSpeed(str(backCar), traci.vehicle.getSpeed(frontCar))
-                traci.vehicle.setSpeed(str(frontCar), traci.vehicle.getSpeed(frontCar))
+                try:
+                    traci.vehicle.setSpeed(str(backCar), traci.vehicle.getSpeed(frontCar))
+                except Exception as e:
+                    print(str(e))
+                    return
+                try:
+                    traci.vehicle.setSpeed(str(frontCar), traci.vehicle.getSpeed(frontCar))
+                except Exception as e:
+                    print(str(e))
+                    return
             try:
                 traci.vehicle.setColor(str(backCar), (255,0,0)) # change color to red
             except:

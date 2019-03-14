@@ -19,11 +19,11 @@ class OpenSpace:
         self.velocity = None
         self.backCar = backCar
         self.frontCar = frontCar
-        if backCar is not "start":
+        if backCar[0] is not 's':
             self.backCarSpeed = traci.vehicle.getSpeed(backCar)
         else:
             self.backCarSpeed = 0
-        if frontCar is not "end":
+        if frontCar[0] is not 'e':
             self.frontCarSpeed = traci.vehicle.getSpeed(frontCar)
         else:
             self.frontCarSpeed = 0
@@ -102,10 +102,16 @@ class OpenSpace:
         return self.length - self.get_safeDistance() # return landing length
 
     def updateSpeedVehicles(self):
-        if self.backCar is not "start":
-            self.backCarSpeed = traci.vehicle.getSpeed(self.backCar)
-        if self.frontCar is not "end":
-            self.frontCarSpeed = traci.vehicle.getSpeed(self.frontCar)
+        if self.backCar[0] is not 's':
+            try:
+                self.backCarSpeed = traci.vehicle.getSpeed(self.backCar)
+            except Exception as e:
+                print(str(e))
+        if self.frontCar[0] is not 'e':
+            try:
+                self.frontCarSpeed = traci.vehicle.getSpeed(self.frontCar)
+            except Exception as e:
+                print(str(e))
 
     def update_landingLength(self):
         self.landingLength = self.length - self.safeDistance
@@ -126,11 +132,11 @@ class OpenSpace:
             print("Can't draw")
 
     def get_velocity(self):
-        if self.backCar is not "start":
+        if self.backCar[0] is not 's':
             backCarSpeed = traci.vehicle.getSpeed(self.backCar)
         else:
             backCarSpeed = 0
-        if self.frontCar is not "end":
+        if self.frontCar[0] is not 'e':
             frontCarSpeed = traci.vehicle.getSpeed(self.frontCar)
         else:
             frontCarSpeed = 0

@@ -7,3 +7,11 @@
 # bytesTotalHash = bytes(backCarHash + frontCarHash, encoding="utf-8")
 # totalHash = hashlib.sha256(bytesTotalHash).hexdigest()
 # print(totalHash)
+
+test2 = "gneE0_4"
+test = "start-" + test2
+
+
+test3 = "abc"
+if test3[0] is 'a':
+    print("Yes")

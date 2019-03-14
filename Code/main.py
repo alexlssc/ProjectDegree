@@ -83,18 +83,15 @@ def main():
         traci.start(simulation)
         allLanes = AllLanes()
         print(str(randomSeed))
+        count = 0
         while traci.simulation.getMinExpectedNumber() > 0:
             traci.simulationStep()
             allLanes.handlesAllManoeuvres()
-            try:
-                print(traci.vehicle.getBestLanes("10"))
-            except Exception as e:
-                print(str(e))
-
-            if traci.simulation.getCurrentTime() == 30000:
-                allLanes.triggerRightChangeLane()
-            if traci.simulation.getCurrentTime() == 20000:
-                allLanes.triggerLeftChangeLane()
+            if traci.simulation.getCurrentTime() > 10000:
+                if traci.simulation.getCurrentTime() % 10000 is 0:
+                    count += 1
+                    print(str(count))
+                    allLanes.triggerLaneChange()
     dirName = convertXMLintoCSV() # Convert and get directory of new folder
     time.sleep(3) # Wait for computer to save converted csv file
     analyseResults(dirName)
