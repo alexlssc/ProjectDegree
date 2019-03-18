@@ -23,13 +23,13 @@ else:
 
 
 listOfSimulation = []
-numberOfSimulation = 1
+numberOfSimulation = 3
 
-sumoBinary = "/Users/alexandrelissac/Documents/SUMO/bin/sumo-gui"
+sumoBinary = "/Users/alexandrelissac/Documents/SUMO/bin/sumo"
 for i in range(numberOfSimulation):
     randomSeed = str(randint(0,900))
     #randomSeed = "511"
-    sumoCmd = [sumoBinary, "-c", "../Resources/FiveLanes/100v.sumocfg", "--lanechange-output", "lanechange.xml" ,"--seed", randomSeed , "--output-prefix", str(i),"--quit-on-end"]
+    sumoCmd = [sumoBinary, "-c", "../Resources/FiveLanes/100v.sumocfg", "--lanechange-output", "lanechange.xml" ,"--seed", randomSeed , "--output-prefix", str(i), "--start","--quit-on-end"]
     listOfSimulation.append(sumoCmd)
 
 import traci
@@ -82,13 +82,13 @@ def main():
     for idx, simulation in enumerate(listOfSimulation):
         traci.start(simulation)
         allLanes = AllLanes()
-        print(str(randomSeed))
         count = 0
+        print("SIMULATION " + str(idx) + " / SEED: " + str(randomSeed))
         while traci.simulation.getMinExpectedNumber() > 0:
             traci.simulationStep()
             allLanes.handlesAllManoeuvres()
             if traci.simulation.getCurrentTime() > 10000:
-                if traci.simulation.getCurrentTime() % 20000 is 0:
+                if traci.simulation.getCurrentTime() % 5000 is 0:
                     count += 1
                     print(str(count))
                     allLanes.triggerLaneChange()

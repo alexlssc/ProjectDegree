@@ -51,12 +51,11 @@ class AllLanes:
             for onLaneCar in self.listOfVehicle:
                 if finishedCar is onLaneCar.get_id():
                     self.listOfVehicle.remove(onLaneCar)
-            for space in self.allLockedSpace:
-                if space.get_backCar() is finishedCar or space.get_frontCar() is finishedCar:
-                    self.unlockSpace(space)
+            for idx,laneChangeData in enumerate(self.LaneChangeData):
+                if laneChangeData[0].get_backCar() == finishedCar or laneChangeData[0].get_frontCar() == finishedCar:
+                    self.unlockVehicle(laneChangeData)
                     try:
-                        print("DELETED")
-                        del self.allLockedSpaces[space]
+                        del self.LaneChangeData[idx]
                     except:
                         print(self.allLockedSpaces)
                         print(space.get_id())
@@ -84,8 +83,7 @@ class AllLanes:
         currentPreparingList = []
         currentLockedList = []
         listReadyToBeLocked = []
-        print("Lane Change Data: " + str(self.LaneChangeData))
-        print("Locked vehicles: " + str(self.listOfLockedVehicle))
+        self.spacesToRemove = []
         for lane in self.listOfLane:
             this_lane_openSpace = lane.updateOpenSpace(listArrived) # Keep track of all open space
             lane.set_currentOpenSpace(this_lane_openSpace)
@@ -98,41 +96,41 @@ class AllLanes:
             for space in self.listOpenSpaces:
                 for idx,laneChangeData in enumerate(self.LaneChangeData):
                     if space.get_id() == laneChangeData[0].get_id():
-                        print("SPACE AMENDED")
                         self.LaneChangeData[idx] = (space, laneChangeData[1], laneChangeData[2], laneChangeData[3])
 
         # Keep track of lock and preparing space
         if self.LaneChangeData:
             for laneChangeData in self.LaneChangeData:
                 if laneChangeData[3] is "preparing":
-                    print("MIDDLE POINT: " + str(laneChangeData[0].get_middlePosition()))
                     currentPreparingList.append(laneChangeData[0])
                 if laneChangeData[3] is "locking":
                     currentLockedList.append(laneChangeData[0])
-        print("Preparing List : " + str(currentPreparingList))
         if currentPreparingList:
             listReadyToBeLocked = self.commonOneLaneObject.preparingOpenSpace(currentPreparingList) # Prepare future locked spaces
+
         if listReadyToBeLocked:
             for space in listReadyToBeLocked:
                 for idx,laneChangeData in enumerate(self.LaneChangeData):
                     if laneChangeData[0] is space:
                         self.LaneChangeData[idx] = (laneChangeData[0], laneChangeData[1], laneChangeData[2], "locked")
                         currentLockedList.append(laneChangeData[0])
-        spacesToRemove = self.commonOneLaneObject.assureLockedSpace(currentLockedList) # Assure that locked spaces stays lockde
+        if currentLockedList:
+            self.spacesToRemove = self.commonOneLaneObject.assureLockedSpace(currentLockedList) # Assure that locked spaces stays lockde
 
         # Remove gone space
-        if spacesToRemove:
-            if laneChangeData:
-                for space in spacesToRemove:
+        if self.spacesToRemove:
+            if self.LaneChangeData:
+                print(str(spacesToRemove))
+                for removeSpace in spacesToRemove:
                     for index, laneChangeData in enumerate(self.LaneChangeData):
-                        if laneChangeData[0] is space:
+                        if laneChangeData[0] is removeSpace:
                             del self.LaneChangeData[index]
 
     def triggerLaneChange(self, vehID = -1):
         carAccepted = False
         count = 0
         if vehID is -1:
-            while not carAccepted and count < 20:
+            while carAccepted is False and count < 20:
                 try:
                     targetVehicle = self.listOfVehicle[randint(0, len(self.listOfVehicle) - 1)].get_id() # Get a vehicle on lane 0
                     targetVehiclePosition = traci.vehicle.getLanePosition(targetVehicle)
@@ -171,8 +169,6 @@ class AllLanes:
                         self.triggerLeftChangeLane(targetVehicle)
                     else:
                         self.triggerRightChangeLane(targetVehicle)
-            else:
-                self.waitingList.append(targetVehicle)
 
 
     # Trigger random left change
@@ -273,7 +269,7 @@ class AllLanes:
                     try:
                         carPosition = traci.vehicle.getLanePosition(laneChangeData[1]) + traci.vehicle.getSpeed(laneChangeData[1])
                     except Exception as e:
-                        self.unlockVehicle([laneChangeData])
+                        self.unlockVehicle(laneChangeData)
                         del self.LaneChangeData[idx]
                         return
                     #targetOpenSpace.changeColor((255,0,0))
@@ -285,7 +281,6 @@ class AllLanes:
                         elif laneChangeData[2] is "right":
                             traci.vehicle.changeLaneRelative(laneChangeData[1], 0, 2.0) # Start manoeuvre to change lane
                         traci.vehicle.setSpeed(laneChangeData[1], -1) # give back to sumo the control of car's speed
-                        print("CHECK DELETED")
                         self.unlockVehicle(laneChangeData)
                         del self.LaneChangeData[idx]
                     else: # Car is too far from middle point to insert
@@ -327,7 +322,10 @@ class AllLanes:
                 break
 
     def unlockVehicle(self, laneChangeData):
-        backCar = laneChangeData[0].get_backCar()
+        try:
+            backCar = laneChangeData[0].get_backCar()
+        except:
+            print("ERROR UNLOCK: " + str(laneChangeData[0]))
         frontCar = laneChangeData[0].get_frontCar()
         vehID = laneChangeData[1]
 
@@ -340,6 +338,7 @@ class AllLanes:
 
 
     def newAttemptToLaneChangeWaitingCars(self):
+        print(str(self.waitingList))
         for car in self.waitingList:
             self.triggerLaneChange(car)
 
@@ -348,5 +347,6 @@ class AllLanes:
         self.keepTrackOfNewVehicle()
         self.removeFinishedVehicle()
         self.updateAllLanes()
-        self.newAttemptToLaneChangeWaitingCars()
+        if self.waitingList:
+            self.newAttemptToLaneChangeWaitingCars()
         self.checkIfVehicleCanChangeLane()

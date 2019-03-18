@@ -24,7 +24,6 @@ class oneLaneObject:
         self.gettingReadySpace = []
         self.vehiclePosition = {}
         if isinstance(id, str) is True:
-            print(id)
             self.laneLength = traci.lane.getLength(id)
         self.YCoordinate = YCoordinate
 
@@ -284,45 +283,43 @@ class oneLaneObject:
     # Assure that locked space stays intact
     def assureLockedSpace(self, lockedSpace):
         spacesToRemove = []
-        print("Locked Space: " + str(lockedSpace))
-        for space in lockedSpace:
-            backCar = space.get_backCar()
-            frontCar = space.get_frontCar()
-            if backCar[0] is not 's':
+        if lockedSpace:
+            for space in lockedSpace:
+                backCar = space.get_backCar()
+                frontCar = space.get_frontCar()
+                if backCar[0] is not 's':
+                    try:
+                        traci.vehicle.setSpeed(str(backCar), traci.vehicle.getSpeed(backCar))
+                    except Exception as e:
+                        print(str(e) + " assureLockedSpace")
+                        spacesToRemove.append(space)
+                if frontCar[0] is not 'e':
+                    try:
+                        traci.vehicle.setSpeed(str(frontCar), traci.vehicle.getSpeed(frontCar))
+                    except Exception as e:
+                        print(str(e) + " assureLockedSpace")
+                        spacesToRemove.append(space)
+                if backCar[0] is not 's' and frontCar[0] is not 'e': # space between two vehicles
+                    # back car adapts its speed to front car
+                    # allows space to keep same length even though there is a slow down ahead
+                    try:
+                        traci.vehicle.setSpeed(str(backCar), traci.vehicle.getSpeed(frontCar))
+                    except Exception as e:
+                        print(str(e) + " assureLockedSpace")
+                        spacesToRemove.append(space)
+                    try:
+                        traci.vehicle.setSpeed(str(frontCar), traci.vehicle.getSpeed(frontCar))
+                    except Exception as e:
+                        print(str(e) + " assureLockedSpace")
+                        spacesToRemove.append(space)
                 try:
-                    traci.vehicle.setSpeed(str(backCar), traci.vehicle.getSpeed(backCar))
-                except Exception as e:
-                    print(str(e) + " assureLockedSpace")
-                    self.unlockSpace(space)
-                    spacesToRemove.append(space)
-            if frontCar[0] is not 'e':
+                    traci.vehicle.setColor(str(backCar), (255,0,0)) # change color to red
+                except:
+                    print("Can't draw")
                 try:
-                    traci.vehicle.setSpeed(str(frontCar), traci.vehicle.getSpeed(frontCar))
-                except Exception as e:
-                    print(str(e) + " assureLockedSpace")
-                    self.unlockSpace(space)
-                    spacesToRemove.append(space)
-            if backCar[0] is not 's' and frontCar[0] is not 'e': # space between two vehicles
-                # back car adapts its speed to front car
-                # allows space to keep same length even though there is a slow down ahead
-                try:
-                    traci.vehicle.setSpeed(str(backCar), traci.vehicle.getSpeed(frontCar))
-                except Exception as e:
-                    print(str(e) + " assureLockedSpace")
-                    self.unlockSpace(space)
-                    spacesToRemove.append(space)
-                try:
-                    traci.vehicle.setSpeed(str(frontCar), traci.vehicle.getSpeed(frontCar))
-                except Exception as e:
-                    print(str(e) + " assureLockedSpace")
-                    self.unlockSpace(space)
-                    spacesToRemove.append(space)
-            try:
-                traci.vehicle.setColor(str(backCar), (255,0,0)) # change color to red
-            except:
-                print("Can't draw")
-            try:
-                traci.vehicle.setColor(str(frontCar), (255,0,0)) # change color to red
-            except:
-                print("Can't draw")
-        return spacesToRemove
+                    traci.vehicle.setColor(str(frontCar), (255,0,0)) # change color to red
+                except:
+                    print("Can't draw")
+            return spacesToRemove
+        else:
+            return None
