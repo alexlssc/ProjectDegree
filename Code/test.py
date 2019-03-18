@@ -8,10 +8,10 @@
 # totalHash = hashlib.sha256(bytesTotalHash).hexdigest()
 # print(totalHash)
 
-test2 = "gneE0_4"
-test = "start-" + test2
+listT = [("Alex", True),
+        ("John", False)]
 
 
-test3 = "abc"
-if test3[0] is 'a':
-    print("Yes")
+listT[1] = ("John", True)
+
+print(listT)

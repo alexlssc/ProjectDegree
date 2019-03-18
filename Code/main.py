@@ -88,7 +88,7 @@ def main():
             traci.simulationStep()
             allLanes.handlesAllManoeuvres()
             if traci.simulation.getCurrentTime() > 10000:
-                if traci.simulation.getCurrentTime() % 10000 is 0:
+                if traci.simulation.getCurrentTime() % 20000 is 0:
                     count += 1
                     print(str(count))
                     allLanes.triggerLaneChange()

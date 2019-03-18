@@ -23,7 +23,9 @@ class oneLaneObject:
         self.lockedSpace = []
         self.gettingReadySpace = []
         self.vehiclePosition = {}
-        self.laneLength = traci.lane.getLength(id)
+        if isinstance(id, str) is True:
+            print(id)
+            self.laneLength = traci.lane.getLength(id)
         self.YCoordinate = YCoordinate
 
 
@@ -41,6 +43,9 @@ class oneLaneObject:
 
     def get_currentOpenSpace(self):
         return self.currentOpenSpace
+
+    def set_currentOpenSpace(self, openSpaces):
+        self.currentOpenSpace = openSpaces
 
     def get_curentOpenSpaceId(self):
         listOfId = []
@@ -129,7 +134,7 @@ class oneLaneObject:
                 previousId = id
                 previousPosition = position
                 count += 1
-
+        return self.currentOpenSpace
 
     # Update values of all locked space
     def updateLockedSpace(self):
@@ -145,13 +150,13 @@ class oneLaneObject:
                     preparedSpace.updateValues(currentSpace)
 
     # Draw all open spaces' middle position
-    def draw_OpenSpace(self):
+    def draw_OpenSpace(self, openSpaceList):
         for oldSpace in self.previousOpenSpace:
             try:
                 traci.poi.remove(oldSpace.get_id(), 10)
             except:
                 print("Can't remove space")
-        for space in self.currentOpenSpace:
+        for space in openSpaceList:
             middlePosition = space.get_middlePosition()
             length = space.get_length()
             try:
@@ -171,18 +176,19 @@ class oneLaneObject:
                     traci.vehicle.setSpeed(space.get_backCar(), -1) # Give speed's control back to sumo
                     traci.vehicle.setColor(space.get_backCar(), (255,255,0)) # Set color back to yellow
                 except Exception as e:
-                    print(str(e))
+                    print(str(e) + " / unlockSpace oneLane")
             if space.get_frontCar()[0] is not 'e': # frontCar needs to be a vehicle
                 try:
                     traci.vehicle.setSpeed(space.get_frontCar(), -1) # Give speed's control back to sumo
                     traci.vehicle.setColor(space.get_frontCar(), (255,255,0)) # Set color back to yellow
                 except Exception as e:
-                    print(str(e))
+                    print(str(e) + " / unlockSpace oneLane")
             self.lockedSpace.remove(space) # remove locked space from list
 
     # Prepare future locked space
-    def preparingOpenSpace(self):
-        for space in self.gettingReadySpace:
+    def preparingOpenSpace(self, preparingSpace):
+        listOfReadyToBeLockedSpace = []
+        for space in preparingSpace:
             # print("First Growing: " + str(space.get_growing()))
             backCar = space.get_backCar()
             frontCar = space.get_frontCar()
@@ -231,8 +237,7 @@ class oneLaneObject:
                     space.update_landingLength()
                     #print("Growing: " + str(space.get_growing()) + " / Length: " + str(space.get_length()) + " / SD: " + str(space.get_safeDistance()) + " / LL: " + str(space.get_landingLength()))
                     if space.get_landingLength() >= 7: # decide if space can welcome car after speed locked
-                        self.lockedSpace.append(space) # lock the space
-                        self.gettingReadySpace.remove(space) # remove from preparing list
+                        listOfReadyToBeLockedSpace.append(space)
                     else: # space can not welcome the car anymore
                         space.set_growing(True) # start growing the space
                 else: # if both speeds aren't synchronised yet
@@ -270,45 +275,48 @@ class oneLaneObject:
                 space.update_landingLength()
                 #print("Growing: " + str(space.get_growing()) + " / Length: " + str(space.get_length()) + " / SD: " + str(space.get_safeDistance()) + " / LL: " + str(space.get_landingLength()))
                 if space.get_landingLength() >= 7: # Decide if car can welcome the car
-                    self.lockedSpace.append(space) # lock the space
-                    self.gettingReadySpace.remove(space) # remove from preparing list
+                    listOfReadyToBeLockedSpace.append(space)
                     if space.get_backCar()[0] is not 's':
                         traci.vehicle.setColor(space.get_backCar(), (255, 255,0))
                     if space.get_frontCar()[0] is not 'e':
                         traci.vehicle.setColor(space.get_frontCar(), (255,255,0))
-
+        return listOfReadyToBeLockedSpace
     # Assure that locked space stays intact
-    def assureLockedSpace(self):
-        for space in self.lockedSpace:
+    def assureLockedSpace(self, lockedSpace):
+        spacesToRemove = []
+        print("Locked Space: " + str(lockedSpace))
+        for space in lockedSpace:
             backCar = space.get_backCar()
             frontCar = space.get_frontCar()
-            #commonSpeed = (traci.vehicle.getSpeed(str(backCar)) + traci.vehicle.getSpeed(str(frontCar))) / 2
-            #print("Space distance: " + str(space.get_length()) + " / BCS: " + str(traci.vehicle.getSpeed(str(backCar))) + "/ FCS: " + str(traci.vehicle.getSpeed(str(frontCar))) )
             if backCar[0] is not 's':
                 try:
                     traci.vehicle.setSpeed(str(backCar), traci.vehicle.getSpeed(backCar))
                 except Exception as e:
-                    print(str(e))
-                    return
+                    print(str(e) + " assureLockedSpace")
+                    self.unlockSpace(space)
+                    spacesToRemove.append(space)
             if frontCar[0] is not 'e':
                 try:
                     traci.vehicle.setSpeed(str(frontCar), traci.vehicle.getSpeed(frontCar))
                 except Exception as e:
-                    print(str(e))
-                    return
+                    print(str(e) + " assureLockedSpace")
+                    self.unlockSpace(space)
+                    spacesToRemove.append(space)
             if backCar[0] is not 's' and frontCar[0] is not 'e': # space between two vehicles
                 # back car adapts its speed to front car
                 # allows space to keep same length even though there is a slow down ahead
                 try:
                     traci.vehicle.setSpeed(str(backCar), traci.vehicle.getSpeed(frontCar))
                 except Exception as e:
-                    print(str(e))
-                    return
+                    print(str(e) + " assureLockedSpace")
+                    self.unlockSpace(space)
+                    spacesToRemove.append(space)
                 try:
                     traci.vehicle.setSpeed(str(frontCar), traci.vehicle.getSpeed(frontCar))
                 except Exception as e:
-                    print(str(e))
-                    return
+                    print(str(e) + " assureLockedSpace")
+                    self.unlockSpace(space)
+                    spacesToRemove.append(space)
             try:
                 traci.vehicle.setColor(str(backCar), (255,0,0)) # change color to red
             except:
@@ -317,3 +325,4 @@ class oneLaneObject:
                 traci.vehicle.setColor(str(frontCar), (255,0,0)) # change color to red
             except:
                 print("Can't draw")
+        return spacesToRemove
