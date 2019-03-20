@@ -206,10 +206,10 @@ class AllLanes:
         # Get vehicle properties
         vehiclePosition = traci.vehicle.getLanePosition(vehID) + traci.vehicle.getSpeed(vehID)
         vehicleLength = traci.vehicle.getLength(vehID)
-        if traci.vehicle.getLeader(vehID, 0) is not None:
-            leadingCarSpeed = traci.vehicle.getSpeed(traci.vehicle.getLeader(vehID,0)[0])
-        else:
-            leadingCarSpeed = 0
+        # if traci.vehicle.getLeader(vehID, 0) is not None:
+        #     leadingCarSpeed = traci.vehicle.getSpeed(traci.vehicle.getLeader(vehID,0)[0])
+        # else:
+        #     leadingCarSpeed = 0
         # Initialise fitness score and fitness value
         shortestDistanceScore = 999999
         closestMiddlePointSpace = None
@@ -220,9 +220,8 @@ class AllLanes:
             relativeDistance = spaceMiddlePosition - vehiclePosition
             backCar = space.get_backCar()
             frontCar = space.get_frontCar()
-            #print("ID: " + space.get_id() + " / " + str(relativeDistance) + " / " + str(space.get_landingLength()) + " / " + str(spaceMiddlePosition) + " / " + str(space.get_length() / 2) + " / " + str(space.get_growth()) + " / " + str(space.get_velocity()))
             if frontCar not in self.listOfLockedVehicle and backCar not in self.listOfLockedVehicle:
-                if relativeDistance > 0:
+                if relativeDistance > 0: # Open space ahead of lane changing car
                     if space.get_velocity() < traci.lane.getMaxSpeed(traci.vehicle.getLaneID(vehID)):
                         if distance < shortestDistanceScore: # If new distance shorter than currentBest
                             if space.get_landingLength() >= 5: # check if car has enough room to fit in open space
@@ -240,7 +239,7 @@ class AllLanes:
                                     shortestDistanceScore = distance
                                     closestMiddlePointSpace = space
                                     bestNonAdjacentSpace = space
-                else:
+                else: # Open space behind lane changing car
                     if space.get_velocity() > traci.vehicle.getSpeed(vehID) :
                         if distance < shortestDistanceScore: # If new distance shorter than currentBest
                             if space.get_landingLength() >= 5: # check if car has enough room to fit in open space
