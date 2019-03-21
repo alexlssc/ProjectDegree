@@ -186,7 +186,7 @@ class oneLaneObject:
 
     # Prepare future locked space
     def preparingOpenSpace(self, preparingSpace):
-        listOfReadyToBeLockedSpace = []
+        resultsPreparing = []
         for space in preparingSpace:
             # print("First Growing: " + str(space.get_growing()))
             backCar = space.get_backCar()
@@ -195,73 +195,70 @@ class oneLaneObject:
                 space.set_growing(True) # declare space is growing
             if not space.get_growing(): # if space is not growing / can welcome car straight away
                 # print("Locking attempt")
-                if backCar[0] is not 's' and frontCar[0] is not 'e': # both front and back are vehicle
-                    # get both speed
-                    try:
-                        frontCarSpeed = traci.vehicle.getSpeed(str(frontCar))
-                    except Exception as e:
-                        print(str(e) + " / preparingSpace")
-                        self.gettingReadySpace.remove(space)
-                        return
-
-                    try:
-                        backCarSpeed = traci.vehicle.getSpeed(str(backCar))
-                    except Exception as e:
-                        print(str(e) + " / preparingSpace")
-                        self.gettingReadySpace.remove(space)
-                        return
-                    # average it to get the target locked speed
-                    lockSpeed = (backCarSpeed + frontCarSpeed) / 2
-                    # get speed difference between front and back car
-                    totalDiffFromCommonSpeed = abs(lockSpeed - backCarSpeed) + abs(lockSpeed - frontCarSpeed)
+                if space.get_landingLength() < 5:
+                    resultsPreparing.append((space, 'remove'))
                 else:
-                    if backCar[0] is 's':
-                        frontCarSpeed = round(traci.vehicle.getSpeed(str(frontCar)))
-                    if frontCar[0] is 'e':
-                        backCarSpeed = round(traci.vehicle.getSpeed(str(backCar)))
-                    totalDiffFromCommonSpeed = 0
-                # print("Space distance: " + str(space.get_length()) + " / BCS: " + str(backCarSpeed) + " / FCS: " + str(frontCarSpeed) + " / CS: " + str(lockSpeed) + " / TDS: " + str(totalDiffFromCommonSpeed))
-                if totalDiffFromCommonSpeed < 0.01: # difference between both speeds is acceptable
-                    # print("Equality reached")
+                    if backCar[0] is not 's' and frontCar[0] is not 'e': # both front and back are vehicle
+                        # get both speed
+                        try:
+                            frontCarSpeed = traci.vehicle.getSpeed(str(frontCar))
+                        except Exception as e:
+                            print(str(e) + " / preparingSpace")
+                            return
 
-                    # workout the new safety distance between vehicles
-                    if backCar[0] is not 's' and frontCar[0] is not 'e':
-                        space.set_safeDistance(lockSpeed, lockSpeed)
+                        try:
+                            backCarSpeed = traci.vehicle.getSpeed(str(backCar))
+                        except Exception as e:
+                            print(str(e) + " / preparingSpace")
+                            return
+                        # average it to get the target locked speed
+                        lockSpeed = (backCarSpeed + frontCarSpeed) / 2
+                        # get speed difference between front and back car
+                        totalDiffFromCommonSpeed = abs(lockSpeed - backCarSpeed) + abs(lockSpeed - frontCarSpeed)
                     else:
                         if backCar[0] is 's':
-                            space.set_safeDistance(0, frontCarSpeed)
+                            frontCarSpeed = round(traci.vehicle.getSpeed(str(frontCar)))
                         if frontCar[0] is 'e':
-                            space.set_safeDistance(backCarSpeed, 0)
-                    # update the landing length
-                    space.update_landingLength()
-                    #print("Growing: " + str(space.get_growing()) + " / Length: " + str(space.get_length()) + " / SD: " + str(space.get_safeDistance()) + " / LL: " + str(space.get_landingLength()))
-                    if space.get_landingLength() >= 7: # decide if space can welcome car after speed locked
-                        listOfReadyToBeLockedSpace.append(space)
-                    else: # space can not welcome the car anymore
-                        space.set_growing(True) # start growing the space
-                else: # if both speeds aren't synchronised yet
-                    # change both car's colours to purple
-                    traci.vehicle.setColor(str(backCar), (255,0,255))
-                    traci.vehicle.setColor(str(frontCar), (255,0,255))
-                    # change their speed
-                    traci.vehicle.setSpeed(str(backCar), lockSpeed)
-                    traci.vehicle.setSpeed(str(frontCar), lockSpeed)
+                            backCarSpeed = round(traci.vehicle.getSpeed(str(backCar)))
+                        totalDiffFromCommonSpeed = 0
+                    # print("Space distance: " + str(space.get_length()) + " / BCS: " + str(backCarSpeed) + " / FCS: " + str(frontCarSpeed) + " / CS: " + str(lockSpeed) + " / TDS: " + str(totalDiffFromCommonSpeed))
+                    if totalDiffFromCommonSpeed < 0.01: # difference between both speeds is acceptable
+                        # print("Equality reached")
+
+                        # workout the new safety distance between vehicles
+                        if backCar[0] is not 's' and frontCar[0] is not 'e':
+                            space.set_safeDistance(lockSpeed, lockSpeed)
+                        else:
+                            if backCar[0] is 's':
+                                space.set_safeDistance(0, frontCarSpeed)
+                            if frontCar[0] is 'e':
+                                space.set_safeDistance(backCarSpeed, 0)
+                        # update the landing length
+                        space.update_landingLength()
+                        #print("Growing: " + str(space.get_growing()) + " / Length: " + str(space.get_length()) + " / SD: " + str(space.get_safeDistance()) + " / LL: " + str(space.get_landingLength()))
+                        if space.get_landingLength() >= 7: # decide if space can welcome car after speed locked
+                            resultsPreparing.append((space, "ready"))
+                        else: # space can not welcome the car anymore
+                            space.set_growing(True) # start growing the space
+                    else: # if both speeds aren't synchronised yet
+                        # change both car's colours to purple
+                        traci.vehicle.setColor(str(backCar), (255,0,255))
+                        traci.vehicle.setColor(str(frontCar), (255,0,255))
+                        # change their speed
+                        traci.vehicle.setSpeed(str(backCar), lockSpeed)
+                        traci.vehicle.setSpeed(str(frontCar), lockSpeed)
             else: #else of is_growing
                 if backCar[0] is not 's':
                     try:
                         backCarSpeed = traci.vehicle.getSpeed(str(backCar))
                     except Exception as e:
                         print(str(e) + " / preparingSpace")
-                        self.gettingReadySpace.remove(space)
-                        return
                     traci.vehicle.setSpeed(str(backCar), backCarSpeed - 0.3)
                 if frontCar[0] is not 'e':
                     try:
                         frontCarSpeed = traci.vehicle.getSpeed(str(frontCar))
                     except Exception as e:
                         print(str(e) + " / preparingSpace")
-                        self.gettingReadySpace.remove(space)
-                        return
                     traci.vehicle.setSpeed(str(frontCar), frontCarSpeed + 0.3)
                 if backCar[0] is not 's' and frontCar[0] is not 'e':
                     space.set_safeDistance(backCarSpeed, frontCarSpeed)
@@ -274,12 +271,12 @@ class oneLaneObject:
                 space.update_landingLength()
                 #print("Growing: " + str(space.get_growing()) + " / Length: " + str(space.get_length()) + " / SD: " + str(space.get_safeDistance()) + " / LL: " + str(space.get_landingLength()))
                 if space.get_landingLength() >= 7: # Decide if car can welcome the car
-                    listOfReadyToBeLockedSpace.append(space)
+                    resultsPreparing.append((space, 'ready'))
                     if space.get_backCar()[0] is not 's':
                         traci.vehicle.setColor(space.get_backCar(), (255, 255,0))
                     if space.get_frontCar()[0] is not 'e':
                         traci.vehicle.setColor(space.get_frontCar(), (255,255,0))
-        return listOfReadyToBeLockedSpace
+        return resultsPreparing
     # Assure that locked space stays intact
     def assureLockedSpace(self, lockedSpace):
         spacesToRemove = []
@@ -287,39 +284,42 @@ class oneLaneObject:
             for space in lockedSpace:
                 backCar = space.get_backCar()
                 frontCar = space.get_frontCar()
-                if backCar[0] is not 's':
+                if space.get_landingLength() < 5:
+                    spacesToRemove.append(space, "waiting")
+                else:
+                    if backCar[0] is not 's':
+                        try:
+                            traci.vehicle.setSpeed(str(backCar), traci.vehicle.getSpeed(backCar))
+                        except Exception as e:
+                            print(str(e) + " assureLockedSpace")
+                            spacesToRemove.append((space, "remove"))
+                    if frontCar[0] is not 'e':
+                        try:
+                            traci.vehicle.setSpeed(str(frontCar), traci.vehicle.getSpeed(frontCar))
+                        except Exception as e:
+                            print(str(e) + " assureLockedSpace")
+                            spacesToRemove.append((space, "remove"))
+                    if backCar[0] is not 's' and frontCar[0] is not 'e': # space between two vehicles
+                        # back car adapts its speed to front car
+                        # allows space to keep same length even though there is a slow down ahead
+                        try:
+                            traci.vehicle.setSpeed(str(backCar), traci.vehicle.getSpeed(frontCar))
+                        except Exception as e:
+                            print(str(e) + " assureLockedSpace")
+                            spacesToRemove.append((space, "remove"))
+                        try:
+                            traci.vehicle.setSpeed(str(frontCar), traci.vehicle.getSpeed(frontCar))
+                        except Exception as e:
+                            print(str(e) + " assureLockedSpace")
+                            spacesToRemove.append((space, "remove"))
                     try:
-                        traci.vehicle.setSpeed(str(backCar), traci.vehicle.getSpeed(backCar))
-                    except Exception as e:
-                        print(str(e) + " assureLockedSpace")
-                        spacesToRemove.append(space)
-                if frontCar[0] is not 'e':
+                        traci.vehicle.setColor(str(backCar), (255,0,0)) # change color to red
+                    except:
+                        print("Can't draw")
                     try:
-                        traci.vehicle.setSpeed(str(frontCar), traci.vehicle.getSpeed(frontCar))
-                    except Exception as e:
-                        print(str(e) + " assureLockedSpace")
-                        spacesToRemove.append(space)
-                if backCar[0] is not 's' and frontCar[0] is not 'e': # space between two vehicles
-                    # back car adapts its speed to front car
-                    # allows space to keep same length even though there is a slow down ahead
-                    try:
-                        traci.vehicle.setSpeed(str(backCar), traci.vehicle.getSpeed(frontCar))
-                    except Exception as e:
-                        print(str(e) + " assureLockedSpace")
-                        spacesToRemove.append(space)
-                    try:
-                        traci.vehicle.setSpeed(str(frontCar), traci.vehicle.getSpeed(frontCar))
-                    except Exception as e:
-                        print(str(e) + " assureLockedSpace")
-                        spacesToRemove.append(space)
-                try:
-                    traci.vehicle.setColor(str(backCar), (255,0,0)) # change color to red
-                except:
-                    print("Can't draw")
-                try:
-                    traci.vehicle.setColor(str(frontCar), (255,0,0)) # change color to red
-                except:
-                    print("Can't draw")
+                        traci.vehicle.setColor(str(frontCar), (255,0,0)) # change color to red
+                    except:
+                        print("Can't draw")
             return spacesToRemove
         else:
             return None

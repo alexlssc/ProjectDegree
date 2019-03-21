@@ -27,9 +27,12 @@ class AllLanes:
         self.listOfLockedVehicle = []
         self.waitingList = []
         self.listOpenSpaces = []
-        # (spaceID, vehID, direction, state)
+        # (spaceID, vehID, direction, state, distanceToOS, Count)
         self.LaneChangeData = []
         self.commonOneLaneObject = oneLaneObject(-1, -1)
+        self.leftLaneCount = 0
+        self.expectedLCC = 0
+        self.cancelledLCC = 0
 
         for i in range(self.numberOfLane):
             laneId = "gneE0_" + str(i)
@@ -43,6 +46,7 @@ class AllLanes:
             for vehicle in listOfNewVehicleLoaded:
                 if not vehicle in self.listOfVehicle:
                     # previous changeLane Mode = 64
+                    traci.vehicle.setSpeed(vehicle, -1)
                     self.listOfVehicle.append(Vehicle(vehicle,256))
 
     def removeFinishedVehicle(self):
@@ -52,13 +56,10 @@ class AllLanes:
                 if finishedCar is onLaneCar.get_id():
                     self.listOfVehicle.remove(onLaneCar)
             for idx,laneChangeData in enumerate(self.LaneChangeData):
-                if laneChangeData[0].get_backCar() == finishedCar or laneChangeData[0].get_frontCar() == finishedCar:
+                if laneChangeData[0].get_backCar() == finishedCar or laneChangeData[0].get_frontCar() == finishedCar or laneChangeData[1] == finishedCar:
                     self.unlockVehicle(laneChangeData)
-                    try:
-                        del self.LaneChangeData[idx]
-                    except:
-                        print(self.allLockedSpaces)
-                        print(space.get_id())
+                    del self.LaneChangeData[idx]
+                    self.cancelledLCC = self.cancelledLCC + 1
 
 
     def get_listOfLane(self):
@@ -82,7 +83,7 @@ class AllLanes:
         self.listOpenSpaces = []
         currentPreparingList = []
         currentLockedList = []
-        listReadyToBeLocked = []
+        resultsPreparing = []
         self.spacesToRemove = []
         for lane in self.listOfLane:
             this_lane_openSpace = lane.updateOpenSpace(listArrived) # Keep track of all open space
@@ -96,7 +97,7 @@ class AllLanes:
             for space in self.listOpenSpaces:
                 for idx,laneChangeData in enumerate(self.LaneChangeData):
                     if space.get_id() == laneChangeData[0].get_id():
-                        self.LaneChangeData[idx] = (space, laneChangeData[1], laneChangeData[2], laneChangeData[3])
+                        self.LaneChangeData[idx] = (space, laneChangeData[1], laneChangeData[2], laneChangeData[3], laneChangeData[4], laneChangeData[5])
 
         # Keep track of lock and preparing space
         if self.LaneChangeData:
@@ -106,25 +107,37 @@ class AllLanes:
                 if laneChangeData[3] is "locking":
                     currentLockedList.append(laneChangeData[0])
         if currentPreparingList:
-            listReadyToBeLocked = self.commonOneLaneObject.preparingOpenSpace(currentPreparingList) # Prepare future locked spaces
+            resultsPreparing = self.commonOneLaneObject.preparingOpenSpace(currentPreparingList) # Prepare future locked spaces
 
-        if listReadyToBeLocked:
-            for space in listReadyToBeLocked:
+        if resultsPreparing:
+            for space in resultsPreparing:
                 for idx,laneChangeData in enumerate(self.LaneChangeData):
-                    if laneChangeData[0] is space:
-                        self.LaneChangeData[idx] = (laneChangeData[0], laneChangeData[1], laneChangeData[2], "locked")
-                        currentLockedList.append(laneChangeData[0])
+                    if space[1] is "ready":
+                        if laneChangeData[0] is space[0]:
+                            self.LaneChangeData[idx] = (laneChangeData[0], laneChangeData[1], laneChangeData[2], "locked", laneChangeData[4], laneChangeData[5])
+                            currentLockedList.append(laneChangeData[0])
+                    else:
+                        for idx, laneChangeData in enumerate(self.LaneChangeData):
+                            if laneChangeData[0] == space[0]:
+                                self.unlockVehicle(laneChangeData)
+                                del self.LaneChangeData[idx]
+                                self.waitingList.append(laneChangeData[1])
+                                break
+
         if currentLockedList:
             self.spacesToRemove = self.commonOneLaneObject.assureLockedSpace(currentLockedList) # Assure that locked spaces stays lockde
 
         # Remove gone space
         if self.spacesToRemove:
             if self.LaneChangeData:
-                print(str(spacesToRemove))
                 for removeSpace in spacesToRemove:
                     for index, laneChangeData in enumerate(self.LaneChangeData):
-                        if laneChangeData[0] is removeSpace:
+                        if laneChangeData[0] is removeSpace[0]:
                             del self.LaneChangeData[index]
+                        if removeSpace[1] is "waiting":
+                            self.unlockVehicle(removeSpace[0])
+                            del self.LaneChangeData[index]
+                            self.waitingList.append(removeSpace[0])
 
     def triggerLaneChange(self, vehID = -1):
         carAccepted = False
@@ -134,8 +147,9 @@ class AllLanes:
                 try:
                     targetVehicle = self.listOfVehicle[randint(0, len(self.listOfVehicle) - 1)].get_id() # Get a vehicle on lane 0
                     targetVehiclePosition = traci.vehicle.getLanePosition(targetVehicle)
-                    if targetVehiclePosition > 150 and targetVehiclePosition < 1500:
+                    if targetVehiclePosition > 150 and targetVehiclePosition < 1250:
                         carAccepted = True
+                        self.expectedLCC = self.expectedLCC + 1
                         break
                     else:
                         count += 1
@@ -150,9 +164,11 @@ class AllLanes:
                     carAccepted =  True
                 else:
                     self.waitingList.remove(targetVehicle)
+                    self.cancelledLCC = self.cancelledLCC + 1
             except Exception as e:
                 print(str(e))
                 self.waitingList.remove(targetVehicle)
+                self.cancelledLCC = self.cancelledLCC + 1
         if carAccepted:
             if targetVehicle not in self.listOfLockedVehicle:
                 if targetVehicle in self.waitingList:
@@ -183,7 +199,8 @@ class AllLanes:
             self.listOfLockedVehicle.append(targetVehicle) # Keep track of the vehicle
             self.listOfLockedVehicle.append(nearestOpenSpace.get_backCar())
             self.listOfLockedVehicle.append(nearestOpenSpace.get_frontCar())
-            self.LaneChangeData.append((nearestOpenSpace, targetVehicle, "left", "preparing"))
+            relativeDistance = abs(traci.vehicle.getLanePosition(targetVehicle) - nearestOpenSpace.get_middlePosition())
+            self.LaneChangeData.append((nearestOpenSpace, targetVehicle, "left", "preparing", relativeDistance, 0))
         else:
             self.waitingList.append(targetVehicle)
 
@@ -197,7 +214,7 @@ class AllLanes:
             self.listOfLockedVehicle.append(targetVehicle) # Keep track of the vehicle
             self.listOfLockedVehicle.append(nearestOpenSpace.get_backCar())
             self.listOfLockedVehicle.append(nearestOpenSpace.get_frontCar())
-            self.LaneChangeData.append((nearestOpenSpace, targetVehicle, "right", "preparing"))
+            self.LaneChangeData.append((nearestOpenSpace, targetVehicle, "right", "preparing", 0, 0))
         else:
             self.waitingList.append(targetVehicle)
 
@@ -206,10 +223,10 @@ class AllLanes:
         # Get vehicle properties
         vehiclePosition = traci.vehicle.getLanePosition(vehID) + traci.vehicle.getSpeed(vehID)
         vehicleLength = traci.vehicle.getLength(vehID)
-        # if traci.vehicle.getLeader(vehID, 0) is not None:
-        #     leadingCarSpeed = traci.vehicle.getSpeed(traci.vehicle.getLeader(vehID,0)[0])
-        # else:
-        #     leadingCarSpeed = 0
+        if traci.vehicle.getLeader(vehID, 0) is not None:
+            leadingCarSpeed = traci.vehicle.getSpeed(traci.vehicle.getLeader(vehID,0)[0])
+        else:
+            leadingCarSpeed = 0
         # Initialise fitness score and fitness value
         shortestDistanceScore = 999999
         closestMiddlePointSpace = None
@@ -220,8 +237,9 @@ class AllLanes:
             relativeDistance = spaceMiddlePosition - vehiclePosition
             backCar = space.get_backCar()
             frontCar = space.get_frontCar()
+            #print("ID: " + space.get_id() + " / " + str(relativeDistance) + " / " + str(space.get_landingLength()) + " / " + str(spaceMiddlePosition) + " / " + str(space.get_length() / 2) + " / " + str(space.get_growth()) + " / " + str(space.get_velocity()))
             if frontCar not in self.listOfLockedVehicle and backCar not in self.listOfLockedVehicle:
-                if relativeDistance > 0: # Open space ahead of lane changing car
+                if relativeDistance > 0:
                     if space.get_velocity() < traci.lane.getMaxSpeed(traci.vehicle.getLaneID(vehID)):
                         if distance < shortestDistanceScore: # If new distance shorter than currentBest
                             if space.get_landingLength() >= 5: # check if car has enough room to fit in open space
@@ -239,7 +257,7 @@ class AllLanes:
                                     shortestDistanceScore = distance
                                     closestMiddlePointSpace = space
                                     bestNonAdjacentSpace = space
-                else: # Open space behind lane changing car
+                else:
                     if space.get_velocity() > traci.vehicle.getSpeed(vehID) :
                         if distance < shortestDistanceScore: # If new distance shorter than currentBest
                             if space.get_landingLength() >= 5: # check if car has enough room to fit in open space
@@ -269,27 +287,53 @@ class AllLanes:
                         carPosition = traci.vehicle.getLanePosition(laneChangeData[1]) + traci.vehicle.getSpeed(laneChangeData[1])
                     except Exception as e:
                         self.unlockVehicle(laneChangeData)
-                        del self.LaneChangeData[idx]
+                        deleteList.append(laneChangeData[1])
                         return
                     #targetOpenSpace.changeColor((255,0,0))
                     middlePositionOpenSpace = laneChangeData[0].get_middlePosition()
+                    try:
+                        traci.vehicle.setColor(laneChangeData[1], (0,0,255))
+                    except:
+                        print("CANT CHANGE LCC COLOUR")
+                    if laneChangeData[0].get_landingLength() < 6:
+                        self.unlockVehicle(laneChangeData)
+                        deleteList.append(laneChangeData[1])
+                        self.waitingList.append(laneChangeData[1])
+                        print("RESEARCH OF OPEN SPACE")
                     # Verify that cars is close enough to the space's middlePosition to insert into itself into space
                     if carPosition > middlePositionOpenSpace - (laneChangeData[0].get_landingLength() / 2) and carPosition < middlePositionOpenSpace + (laneChangeData[0].get_landingLength() / 2):
                         if laneChangeData[2] is "left":
                             traci.vehicle.changeLaneRelative(laneChangeData[1], 1, 2.0) # Start manoeuvre to change lane
+                            self.leftLaneCount = self.leftLaneCount + 1
                         elif laneChangeData[2] is "right":
                             traci.vehicle.changeLaneRelative(laneChangeData[1], 0, 2.0) # Start manoeuvre to change lane
+                            self.leftLaneCount = self.leftLaneCount + 1
                         traci.vehicle.setSpeed(laneChangeData[1], -1) # give back to sumo the control of car's speed
+                        traci.vehicle.setColor(laneChangeData[1], (0,255,0))
                         self.unlockVehicle(laneChangeData)
-                        del self.LaneChangeData[idx]
+                        deleteList.append(laneChangeData[1])
                     else: # Car is too far from middle point to insert
-                        if (carPosition - middlePositionOpenSpace) > 0: # Car is ahead of space's middle position
-                            # Reduce car speed to meet space's middle position
-                            traci.vehicle.setSpeed(laneChangeData[1], traci.vehicle.getSpeed(laneChangeData[1]) - 0.2)
-                        else: # Car is behind space's middle position
-                            # Increase speed to meet space's middle position
-                            traci.vehicle.setSpeed(laneChangeData[1], traci.vehicle.getSpeed(laneChangeData[1]) + 0.2)
-
+                        relativeDistance = abs(carPosition - middlePositionOpenSpace)
+                        if laneChangeData[5] <= 5:
+                            if laneChangeData[4] > relativeDistance:
+                                self.LaneChangeData[idx] = (laneChangeData[0], laneChangeData[1], laneChangeData[2], laneChangeData[3], relativeDistance, laneChangeData[5])
+                            else:
+                                self.LaneChangeData[idx] = (laneChangeData[0], laneChangeData[1], laneChangeData[2], laneChangeData[3], relativeDistance, laneChangeData[5] + 1)
+                            if (carPosition - middlePositionOpenSpace) > 0: # Car is ahead of space's middle position
+                                # Reduce car speed to meet space's middle position
+                                traci.vehicle.setSpeed(laneChangeData[1], traci.vehicle.getSpeed(laneChangeData[1]) - 0.2)
+                            else: # Car is behind space's middle position
+                                # Increase speed to meet space's middle position
+                                traci.vehicle.setSpeed(laneChangeData[1], traci.vehicle.getSpeed(laneChangeData[1]) + 0.2)
+                        else:
+                            self.unlockVehicle(laneChangeData)
+                            deleteList.append(laneChangeData[1])
+                            self.waitingList.append(laneChangeData[1])
+                            print("RESEARCH OF OPEN SPACE")
+            for removeDataChange in deleteList:
+                for idx,laneChangeData in enumerate(self.LaneChangeData):
+                    if removeDataChange == laneChangeData[1]:
+                        del self.LaneChangeData[idx]
     # Remove space from locked space's list
     def unlockSpace(self, space):
         self.allLockedSpace.remove(space)
@@ -328,6 +372,31 @@ class AllLanes:
         frontCar = laneChangeData[0].get_frontCar()
         vehID = laneChangeData[1]
 
+        try:
+            traci.vehicle.setColor(backCar, (255,255,0))
+        except:
+            print("ERROR UNLOCK CHANGE COLOR VEHID")
+
+        try:
+            traci.vehicle.setSpeed(backCar, -1)
+        except:
+            print("ERROR CHANGING LOCK CAR SPEED")
+
+        try:
+            traci.vehicle.setSpeed(frontCar, -1)
+        except:
+            print("ERROR CHANGING LOCK CAR SPEED")
+
+        try:
+            traci.vehicle.setColor(frontCar, (255,255,0))
+        except:
+            print("ERROR UNLOCK CHANGE COLOR VEHID")
+
+        try:
+            traci.vehicle.setColor(vehID, (255,255,0))
+        except:
+            print("ERROR UNLOCK CHANGE COLOR VEHID")
+
         if backCar in self.listOfLockedVehicle:
             self.listOfLockedVehicle.remove(backCar)
         if frontCar in self.listOfLockedVehicle:
@@ -337,7 +406,6 @@ class AllLanes:
 
 
     def newAttemptToLaneChangeWaitingCars(self):
-        print(str(self.waitingList))
         for car in self.waitingList:
             self.triggerLaneChange(car)
 
@@ -346,6 +414,7 @@ class AllLanes:
         self.keepTrackOfNewVehicle()
         self.removeFinishedVehicle()
         self.updateAllLanes()
+        print(self.LaneChangeData)
         if self.waitingList:
             self.newAttemptToLaneChangeWaitingCars()
         self.checkIfVehicleCanChangeLane()

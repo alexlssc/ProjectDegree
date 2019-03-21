@@ -23,13 +23,13 @@ else:
 
 
 listOfSimulation = []
-numberOfSimulation = 3
+numberOfSimulation = 1
 
-sumoBinary = "/Users/alexandrelissac/Documents/SUMO/bin/sumo"
+sumoBinary = "/Users/alexandrelissac/Documents/SUMO/bin/sumo-gui"
 for i in range(numberOfSimulation):
     randomSeed = str(randint(0,900))
     #randomSeed = "511"
-    sumoCmd = [sumoBinary, "-c", "../Resources/FiveLanes/100v.sumocfg", "--lanechange-output", "lanechange.xml" ,"--seed", randomSeed , "--output-prefix", str(i), "--start","--quit-on-end"]
+    sumoCmd = [sumoBinary, "-c", "../Resources/FiveLanes/100v.sumocfg", "--lanechange-output", "lanechange.xml", "--tripinfo-output", "tripinfos.xml" ,"--seed", randomSeed , "--output-prefix", str(i),"--start","--quit-on-end"]
     listOfSimulation.append(sumoCmd)
 
 import traci
@@ -42,11 +42,13 @@ def convertXMLintoCSV():
     pathlib.Path(dirName).mkdir(parents=True, exist_ok=True)
     for sim in range(numberOfSimulation):
         fileTargetLaneChange = str(sim) + "lanechange.xml"
-        fileOutputLaneChnage = str(sim) + "_lanechange.csv"
+        fileOutputLaneChange = str(sim) + "_lanechange.csv"
         fileTargetTripInfo = str(sim) + "tripinfos.xml"
         fileOutputTripInfo = str(sim) + "_tripinfos.csv"
-        subprocess.Popen(["python", "/Users/alexandrelissac/Documents/SUMO/tools/xml/xml2csv.py", "/Users/alexandrelissac/Desktop/Project/Simulation/Code/" + fileTargetLaneChange, "--output", dirName + "/" + fileOutputLaneChnage])
-        subprocess.Popen(["python", "/Users/alexandrelissac/Documents/SUMO/tools/xml/xml2csv.py", "/Users/alexandrelissac/Desktop/Project/Simulation/Resources/FiveLanes/" + fileTargetTripInfo, "--output", dirName + "/" + fileOutputTripInfo])
+        print(dirName + "/" + fileOutputLaneChange)
+        print("/Users/alexandrelissac/Desktop/Project/Simulation/Code/" + fileTargetLaneChange)
+        subprocess.Popen(["python", "/Users/alexandrelissac/Documents/SUMO/tools/xml/xml2csv.py", "/Users/alexandrelissac/Desktop/Project/Simulation/Code/" + fileTargetLaneChange, "--output", dirName + "/" + fileOutputLaneChange])
+        subprocess.Popen(["python", "/Users/alexandrelissac/Documents/SUMO/tools/xml/xml2csv.py", "/Users/alexandrelissac/Desktop/Project/Simulation/Code/" + fileTargetTripInfo, "--output", dirName + "/" + fileOutputTripInfo])
     return dirName
 
 def analyseResults(dirName):
@@ -82,17 +84,16 @@ def main():
     for idx, simulation in enumerate(listOfSimulation):
         traci.start(simulation)
         allLanes = AllLanes()
-        count = 0
         print("SIMULATION " + str(idx) + " / SEED: " + str(randomSeed))
         while traci.simulation.getMinExpectedNumber() > 0:
             traci.simulationStep()
             allLanes.handlesAllManoeuvres()
             if traci.simulation.getCurrentTime() > 10000:
                 if traci.simulation.getCurrentTime() % 5000 is 0:
-                    count += 1
-                    print(str(count))
                     allLanes.triggerLaneChange()
+    print("LC COUNT: " + str(allLanes.leftLaneCount) + " / EXPECTED LCC: " + str(allLanes.expectedLCC) + " / CANCELLED LCC: " + str(allLanes.cancelledLCC))
     dirName = convertXMLintoCSV() # Convert and get directory of new folder
+    print(dirName)
     time.sleep(3) # Wait for computer to save converted csv file
     analyseResults(dirName)
 

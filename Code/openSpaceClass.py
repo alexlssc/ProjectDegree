@@ -92,8 +92,10 @@ class OpenSpace:
     # workout safe distance between vehicle for space
     def set_safeDistance(self, backVehicleOneSecSpeed, frontVehicleOneSecSpeed):
         # using braking distance formula to calculate safe distance
-        backCarSafeDistance = (backVehicleOneSecSpeed ** 2) / (254 * 0.7)
-        frontCarSafeDistance = (backVehicleOneSecSpeed ** 2) / (254 * 0.7)
+        backSpeedKPH = (backVehicleOneSecSpeed * 60 * 60) / 1000
+        frontSpeedKPH = (frontVehicleOneSecSpeed * 60 * 60) / 1000
+        backCarSafeDistance = (backSpeedKPH ** 2) / (254 * 0.7)
+        frontCarSafeDistance = (frontSpeedKPH ** 2) / (254 * 0.7)
         self.safeDistance = backCarSafeDistance + frontCarSafeDistance
 
     def get_landingLength(self):
@@ -117,8 +119,11 @@ class OpenSpace:
         self.landingLength = self.length - self.safeDistance
 
     def get_growing(self):
-        return self.growing
-
+        self.updateSpeedVehicles()
+        if self.backCarSpeed <= self.frontCarSpeed:
+            return False
+        else:
+            return True
     def set_growing(self, new_value):
         self.growing = new_value
 
