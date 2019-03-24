@@ -23,13 +23,13 @@ else:
 
 
 listOfSimulation = []
-numberOfSimulation = 1
+numberOfSimulation = 5
 
-sumoBinary = "/Users/alexandrelissac/Documents/SUMO/bin/sumo-gui"
+sumoBinary = "/Users/alexandrelissac/Documents/SUMO/bin/sumo"
 for i in range(numberOfSimulation):
     randomSeed = str(randint(0,900))
     #randomSeed = "511"
-    sumoCmd = [sumoBinary, "-c", "../Resources/FiveLanes/100v.sumocfg", "--lanechange-output", "lanechange.xml", "--tripinfo-output", "tripinfos.xml" ,"--seed", randomSeed , "--output-prefix", str(i),"--start","--quit-on-end"]
+    sumoCmd = [sumoBinary, "-c", "../Resources/FiveLanes/500v.sumocfg", "--lanechange-output", "lanechange.xml", "--tripinfo-output", "tripinfos.xml" ,"--seed", randomSeed , "--output-prefix", str(i),"--start","--quit-on-end"]
     listOfSimulation.append(sumoCmd)
 
 import traci
@@ -45,8 +45,7 @@ def convertXMLintoCSV():
         fileOutputLaneChange = str(sim) + "_lanechange.csv"
         fileTargetTripInfo = str(sim) + "tripinfos.xml"
         fileOutputTripInfo = str(sim) + "_tripinfos.csv"
-        print(dirName + "/" + fileOutputLaneChange)
-        print("/Users/alexandrelissac/Desktop/Project/Simulation/Code/" + fileTargetLaneChange)
+        # subprocess.Popen(["xml2csv", "--input", "/Users/alexandrelissac/Desktop/Project/Simulation/Code/" + fileTargetTripInfo, "--output", dirName + "/" + fileOutputTripInfo, "--tag", "item"])
         subprocess.Popen(["python", "/Users/alexandrelissac/Documents/SUMO/tools/xml/xml2csv.py", "/Users/alexandrelissac/Desktop/Project/Simulation/Code/" + fileTargetLaneChange, "--output", dirName + "/" + fileOutputLaneChange])
         subprocess.Popen(["python", "/Users/alexandrelissac/Documents/SUMO/tools/xml/xml2csv.py", "/Users/alexandrelissac/Desktop/Project/Simulation/Code/" + fileTargetTripInfo, "--output", dirName + "/" + fileOutputTripInfo])
     return dirName
@@ -58,18 +57,51 @@ def analyseResults(dirName):
     ws = wb.add_sheet('Result Simulation')
     ws.write(0,0, "Simulation Number")
     ws.write(0,1, "Average Duration Trip")
+    ws.write(0,2, "Number of Lane Change")
+    ws.write(0,3, "Average Duration Trip LCC")
+    ws.write(0,4, "Average Duration Trip No LCC")
+
     listOfAverageDurationTrip = []
+    listOfLaneChange = []
+    listAverageTimeLCC = []
+    listAverageTimeNoLCC = []
+    keepTrackAverageLCC = []
+    keepTrackAverageNoLCC = []
 
     while(file_exist):
         fileDir = dirName + "/" + str(count) + "_tripinfos.csv"
+        lcDir = dirName + "/" + str(count) + "_lanechange.csv"
         if not os.path.exists(fileDir):
             break
         try:
-            currentCsv = pd.read_csv(fileDir, delimiter=';')
-            currentAverageDurationTrip = np.mean(currentCsv['tripinfo_duration'])
+            #Average duration trip
+            tripCsv = pd.read_csv(fileDir, delimiter=';')
+            currentAverageDurationTrip = np.mean(tripCsv['tripinfo_duration'])
             listOfAverageDurationTrip.append(currentAverageDurationTrip)
+            # Number of lane change
+            lcCsv = pd.read_csv(lcDir, delimiter=';')
+            numberOfLaneChange = len(lcCsv['change_id'])
+            listOfLaneChange.append(numberOfLaneChange)
+
+            #Average duration for LCC and non-LCC
+            allLCID = lcCsv.change_id.unique()
+            for idx,row in tripCsv.iterrows():
+                if tripCsv.loc[idx, 'tripinfo_id'] in allLCID:
+                    listAverageTimeLCC.append(tripCsv.loc[idx,'tripinfo_duration'])
+                else:
+                    listAverageTimeNoLCC.append(tripCsv.loc[idx,'tripinfo_duration'])
+
+            averageDurationLCC = np.mean(listAverageTimeLCC)
+            averageDurationNoLCC = np.mean(listAverageTimeNoLCC)
+            keepTrackAverageLCC.append(averageDurationLCC)
+            keepTrackAverageNoLCC.append(averageDurationNoLCC)
+
             ws.write(count + 1, 0, str(count))
             ws.write(count + 1, 1, str(currentAverageDurationTrip))
+            ws.write(count + 1, 2, str(numberOfLaneChange))
+            ws.write(count + 1, 3, str(averageDurationLCC))
+            ws.write(count + 1, 4, str(averageDurationNoLCC))
+
             count += 1
         except:
             print("ERROR: " + str(count))
@@ -78,6 +110,9 @@ def analyseResults(dirName):
 
     ws.write(count + 1, 0, "Total Average")
     ws.write(count + 1, 1, str(np.mean(listOfAverageDurationTrip)))
+    ws.write(count + 1, 2, str(np.mean(listOfLaneChange)))
+    ws.write(count + 1, 3, str(np.mean(keepTrackAverageLCC)))
+    ws.write(count + 1, 4, str(np.mean(keepTrackAverageNoLCC)))
     wb.save(dirName + '/results.xls')
 
 def main():
@@ -89,9 +124,8 @@ def main():
             traci.simulationStep()
             allLanes.handlesAllManoeuvres()
             if traci.simulation.getCurrentTime() > 10000:
-                if traci.simulation.getCurrentTime() % 5000 is 0:
-                    allLanes.triggerLaneChange()
-    print("LC COUNT: " + str(allLanes.leftLaneCount) + " / EXPECTED LCC: " + str(allLanes.expectedLCC) + " / CANCELLED LCC: " + str(allLanes.cancelledLCC))
+                allLanes.checkCarDesiringLaneChange()
+        traci.close()
     dirName = convertXMLintoCSV() # Convert and get directory of new folder
     print(dirName)
     time.sleep(3) # Wait for computer to save converted csv file

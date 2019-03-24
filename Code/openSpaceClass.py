@@ -119,11 +119,8 @@ class OpenSpace:
         self.landingLength = self.length - self.safeDistance
 
     def get_growing(self):
-        self.updateSpeedVehicles()
-        if self.backCarSpeed <= self.frontCarSpeed:
-            return False
-        else:
-            return True
+        return self.growing
+        
     def set_growing(self, new_value):
         self.growing = new_value
 

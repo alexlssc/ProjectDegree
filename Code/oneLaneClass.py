@@ -235,11 +235,10 @@ class oneLaneObject:
                                 space.set_safeDistance(backCarSpeed, 0)
                         # update the landing length
                         space.update_landingLength()
-                        #print("Growing: " + str(space.get_growing()) + " / Length: " + str(space.get_length()) + " / SD: " + str(space.get_safeDistance()) + " / LL: " + str(space.get_landingLength()))
                         if space.get_landingLength() >= 7: # decide if space can welcome car after speed locked
                             resultsPreparing.append((space, "ready"))
                         else: # space can not welcome the car anymore
-                            space.set_growing(True) # start growing the space
+                            resultsPreparing.append((space, 'remove'))
                     else: # if both speeds aren't synchronised yet
                         # change both car's colours to purple
                         traci.vehicle.setColor(str(backCar), (255,0,255))
@@ -251,15 +250,15 @@ class oneLaneObject:
                 if backCar[0] is not 's':
                     try:
                         backCarSpeed = traci.vehicle.getSpeed(str(backCar))
+                        traci.vehicle.setSpeed(str(backCar), backCarSpeed - 0.3)
                     except Exception as e:
                         print(str(e) + " / preparingSpace")
-                    traci.vehicle.setSpeed(str(backCar), backCarSpeed - 0.3)
                 if frontCar[0] is not 'e':
                     try:
                         frontCarSpeed = traci.vehicle.getSpeed(str(frontCar))
+                        traci.vehicle.setSpeed(str(frontCar), frontCarSpeed + 0.3)
                     except Exception as e:
                         print(str(e) + " / preparingSpace")
-                    traci.vehicle.setSpeed(str(frontCar), frontCarSpeed + 0.3)
                 if backCar[0] is not 's' and frontCar[0] is not 'e':
                     space.set_safeDistance(backCarSpeed, frontCarSpeed)
                 else:

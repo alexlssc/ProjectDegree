@@ -52,14 +52,32 @@ class AllLanes:
     def removeFinishedVehicle(self):
         finishedVehicles = traci.simulation.getArrivedIDList()
         for finishedCar in finishedVehicles:
-            for onLaneCar in self.listOfVehicle:
+            for index,onLaneCar in enumerate(self.listOfVehicle):
                 if finishedCar is onLaneCar.get_id():
-                    self.listOfVehicle.remove(onLaneCar)
+                    del self.listOfVehicle[index]
             for idx,laneChangeData in enumerate(self.LaneChangeData):
                 if laneChangeData[0].get_backCar() == finishedCar or laneChangeData[0].get_frontCar() == finishedCar or laneChangeData[1] == finishedCar:
                     self.unlockVehicle(laneChangeData)
                     del self.LaneChangeData[idx]
                     self.cancelledLCC = self.cancelledLCC + 1
+
+    def checkCarDesiringLaneChange(self):
+        for index,vehicle in enumerate(self.listOfVehicle):
+            try:
+                rightLC = traci.vehicle.wantsAndCouldChangeLane(vehicle.get_id(), -1)
+                leftLC = traci.vehicle.wantsAndCouldChangeLane(vehicle.get_id(), 1)
+                if vehicle.get_id() not in self.listOfLockedVehicle and vehicle.get_id() not in self.waitingList:
+                    if rightLC is True and leftLC is False:
+                        self.triggerRightChangeLane(vehicle.get_id())
+                    elif leftLC is True and rightLC is True:
+                        self.triggerLeftChangeLane(vehicle.get_id())
+                    elif rightLC is True and leftLC is True:
+                        self.triggerLaneChange(vehicle.get_id())
+                # print(vehicle.get_id() + " Lane Change Right: " + str(rightLC) + " / Lane Change Left: " + str(leftLC))
+            except:
+                print("CAR DOES NOT EXIST")
+                del self.listOfVehicle[index]
+
 
 
     def get_listOfLane(self):
@@ -319,12 +337,12 @@ class AllLanes:
                                 self.LaneChangeData[idx] = (laneChangeData[0], laneChangeData[1], laneChangeData[2], laneChangeData[3], relativeDistance, laneChangeData[5])
                             else:
                                 self.LaneChangeData[idx] = (laneChangeData[0], laneChangeData[1], laneChangeData[2], laneChangeData[3], relativeDistance, laneChangeData[5] + 1)
-                            if (carPosition - middlePositionOpenSpace) > 0: # Car is ahead of space's middle position
-                                # Reduce car speed to meet space's middle position
-                                traci.vehicle.setSpeed(laneChangeData[1], traci.vehicle.getSpeed(laneChangeData[1]) - 0.2)
-                            else: # Car is behind space's middle position
-                                # Increase speed to meet space's middle position
-                                traci.vehicle.setSpeed(laneChangeData[1], traci.vehicle.getSpeed(laneChangeData[1]) + 0.2)
+                            # if (carPosition - middlePositionOpenSpace) > 0: # Car is ahead of space's middle position
+                            #     # Reduce car speed to meet space's middle position
+                            #     traci.vehicle.setSpeed(laneChangeData[1], traci.vehicle.getSpeed(laneChangeData[1]) - 0.2)
+                            # else: # Car is behind space's middle position
+                            #     # Increase speed to meet space's middle position
+                            #     traci.vehicle.setSpeed(laneChangeData[1], traci.vehicle.getSpeed(laneChangeData[1]) + 0.2)
                         else:
                             self.unlockVehicle(laneChangeData)
                             deleteList.append(laneChangeData[1])
@@ -414,6 +432,7 @@ class AllLanes:
         self.keepTrackOfNewVehicle()
         self.removeFinishedVehicle()
         self.updateAllLanes()
+        self.checkCarDesiringLaneChange()
         print(self.LaneChangeData)
         if self.waitingList:
             self.newAttemptToLaneChangeWaitingCars()
