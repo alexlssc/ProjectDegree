@@ -7,11 +7,8 @@
 # bytesTotalHash = bytes(backCarHash + frontCarHash, encoding="utf-8")
 # totalHash = hashlib.sha256(bytesTotalHash).hexdigest()
 # print(totalHash)
+import random
 
-listT = [("Alex", True),
-        ("John", False)]
-
-
-listT[1] = ("John", True)
-
-print(listT)
+listT = [1,2,3,4,5,6,7,8,9]
+random.shuffle(listT)
+print(str(listT))

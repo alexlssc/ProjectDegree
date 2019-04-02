@@ -79,8 +79,6 @@ class oneLaneObject:
         count = 0
         if vehicleOnLane:
             for id, position in self.vehiclePosition.items():
-                # if self.id == "gneE0_4":
-                #     print("ID: " + id + " / P: " + str(traci.vehicle.getPosition(id)))
                 lengthVehicle = traci.vehicle.getLength(id) # Get length of vehicle analysed
                 if len(self.vehiclePosition) == 1: # Only one car on the lane
                     distanceBeforeCar = position - lengthVehicle
@@ -91,15 +89,11 @@ class oneLaneObject:
                     self.currentOpenSpace.append(OpenSpace(distanceAfterCar, middlePositionDistanceAfterCar, id, "end-" + self.id))
                 elif len(self.vehiclePosition) == 2: # Two cars on the lane
                     if count == 0: # First car on the lane / Closest to start
-                        # if self.id == "gneE0_0":
-                        #     print("ID: " + id + " / P: " + str(position))
                         distance = position - lengthVehicle
                         middlePosition = distance / 2
                         self.currentOpenSpace.append(OpenSpace(distance, middlePosition, "start-" + self.id, id))
 
                     else: # Last car on the lane / Closest to end
-                            # if self.id == "gneE0_0":
-                            #     print("ID: " + id + " / P: " + str(position) + " / END: " + str(self.laneLength))
                             distance = math.sqrt(((position - lengthVehicle) - previousPosition) ** 2)
                             middlePosition = (position - lengthVehicle) - (distance / 2)
                             self.currentOpenSpace.append(OpenSpace(distance, middlePosition, previousId, id))
@@ -109,14 +103,10 @@ class oneLaneObject:
 
                 else: # More than two cars on the lane
                     if count == 0: # First car on the lane / Closest to start
-                        # if self.id == "gneE0_0":
-                        #     print("ID: " + id + " / P: " + str(position))
                         distance = position - lengthVehicle
                         middlePosition = distance / 2
                         self.currentOpenSpace.append(OpenSpace(distance, middlePosition, "start-" + self.id, id))
                     elif count == len(self.vehiclePosition) - 1: # Last car on the lane / Closest to end
-                        # if self.id == "gneE0_0":
-                        #     print("ID: " + id + " / P: " + str(position) + " / END: " + str(self.laneLength))
                         distance = math.sqrt(((position - lengthVehicle) - previousPosition) ** 2)
                         middlePosition = (position - lengthVehicle) - (distance / 2)
                         self.currentOpenSpace.append(OpenSpace(distance, middlePosition, previousId, id))
@@ -124,8 +114,6 @@ class oneLaneObject:
                         secondMiddlePosition = self.laneLength - (secondDistance / 2)
                         self.currentOpenSpace.append(OpenSpace(secondDistance, secondMiddlePosition, id, "end-" + self.id))
                     else: # Any middle car on the lane
-                        # if self.id == "gneE0_0":
-                        #     print("ID: " + id + " / PR: " + str(previousPosition) + " / P: " + str(position))
                         distance = math.sqrt(((position - lengthVehicle) - previousPosition) ** 2)
                         middlePosition = (position - lengthVehicle) - (distance / 2)
                         self.currentOpenSpace.append(OpenSpace(distance, middlePosition, previousId, id))

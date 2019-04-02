@@ -23,14 +23,21 @@ else:
 
 
 listOfSimulation = []
-numberOfSimulation = 5
+numberOfSimulation = 2
+listOfSeed = []
+useRandomValue = True
 
 sumoBinary = "/Users/alexandrelissac/Documents/SUMO/bin/sumo"
 for i in range(numberOfSimulation):
-    randomSeed = str(randint(0,900))
-    #randomSeed = "511"
-    sumoCmd = [sumoBinary, "-c", "../Resources/FiveLanes/500v.sumocfg", "--lanechange-output", "lanechange.xml", "--tripinfo-output", "tripinfos.xml" ,"--seed", randomSeed , "--output-prefix", str(i),"--start","--quit-on-end"]
-    listOfSimulation.append(sumoCmd)
+    if useRandomValue is False:
+        sumoCmd = [sumoBinary, "-c", "../Resources/FiveLanes/1000v.sumocfg", "--lanechange-output", "lanechange.xml", "--tripinfo-output", "tripinfos.xml" ,"--seed", str(listOfSeed[i]) , "--output-prefix", str(i),"--start","--quit-on-end"]
+        listOfSimulation.append(sumoCmd)
+    else:
+        randomSeed = str(randint(0,100000))
+        #randomSeed = "511"
+        listOfSeed.append(randomSeed)
+        sumoCmd = [sumoBinary, "-c", "../Resources/FiveLanes/1000v.sumocfg", "--lanechange-output", "lanechange.xml", "--tripinfo-output", "tripinfos.xml" ,"--seed", randomSeed , "--output-prefix", str(i),"--start","--quit-on-end"]
+        listOfSimulation.append(sumoCmd)
 
 import traci
 import traci.constants as tc
@@ -57,16 +64,25 @@ def analyseResults(dirName):
     ws = wb.add_sheet('Result Simulation')
     ws.write(0,0, "Simulation Number")
     ws.write(0,1, "Average Duration Trip")
-    ws.write(0,2, "Number of Lane Change")
-    ws.write(0,3, "Average Duration Trip LCC")
-    ws.write(0,4, "Average Duration Trip No LCC")
+    ws.write(0,2, "Std Average Duration Trip")
+    ws.write(0,3, "Number of Lane Change")
+    ws.write(0,4, "Average Duration Trip LCC")
+    ws.write(0,5, "Average Duration Trip No LCC")
+    ws.write(0,6, "TimeLoss LCC")
+    ws.write(0,7, "TimeLoss No LCC")
+    ws.write(0,8, "Seed")
+
 
     listOfAverageDurationTrip = []
     listOfLaneChange = []
     listAverageTimeLCC = []
     listAverageTimeNoLCC = []
+    listAverageTimeLossLCC = []
+    listAverageTimeLossNoLCC = []
     keepTrackAverageLCC = []
     keepTrackAverageNoLCC = []
+    keepTrackAverageTimeLossLCC = []
+    keepTrackAverageTimeLossNoLCC = []
 
     while(file_exist):
         fileDir = dirName + "/" + str(count) + "_tripinfos.csv"
@@ -77,6 +93,7 @@ def analyseResults(dirName):
             #Average duration trip
             tripCsv = pd.read_csv(fileDir, delimiter=';')
             currentAverageDurationTrip = np.mean(tripCsv['tripinfo_duration'])
+            stdDurationTrip = np.std(tripCsv['tripinfo_duration'])
             listOfAverageDurationTrip.append(currentAverageDurationTrip)
             # Number of lane change
             lcCsv = pd.read_csv(lcDir, delimiter=';')
@@ -88,19 +105,30 @@ def analyseResults(dirName):
             for idx,row in tripCsv.iterrows():
                 if tripCsv.loc[idx, 'tripinfo_id'] in allLCID:
                     listAverageTimeLCC.append(tripCsv.loc[idx,'tripinfo_duration'])
+                    listAverageTimeLossLCC.append(tripCsv.loc[idx,'tripinfo_timeLoss'])
                 else:
                     listAverageTimeNoLCC.append(tripCsv.loc[idx,'tripinfo_duration'])
+                    listAverageTimeLossNoLCC.append(tripCsv.loc[idx,'tripinfo_timeLoss'])
 
             averageDurationLCC = np.mean(listAverageTimeLCC)
             averageDurationNoLCC = np.mean(listAverageTimeNoLCC)
             keepTrackAverageLCC.append(averageDurationLCC)
             keepTrackAverageNoLCC.append(averageDurationNoLCC)
+            averageTimeLossLCC = np.mean(listAverageTimeLossLCC)
+            averageTimeLossNoLCC = np.mean(listAverageTimeLossNoLCC)
+            keepTrackAverageTimeLossLCC.append(averageTimeLossLCC)
+            keepTrackAverageTimeLossNoLCC.append(averageTimeLossNoLCC)
 
             ws.write(count + 1, 0, str(count))
             ws.write(count + 1, 1, str(currentAverageDurationTrip))
-            ws.write(count + 1, 2, str(numberOfLaneChange))
-            ws.write(count + 1, 3, str(averageDurationLCC))
-            ws.write(count + 1, 4, str(averageDurationNoLCC))
+            ws.write(count + 1, 2, str(stdDurationTrip))
+            ws.write(count + 1, 3, str(numberOfLaneChange))
+            ws.write(count + 1, 4, str(averageDurationLCC))
+            ws.write(count + 1, 5, str(averageDurationNoLCC))
+            ws.write(count + 1, 6, str(averageTimeLossLCC))
+            ws.write(count + 1, 7, str(averageTimeLossNoLCC))
+            ws.write(count + 1, 8, str(listOfSeed[count]))
+
 
             count += 1
         except:
@@ -110,16 +138,18 @@ def analyseResults(dirName):
 
     ws.write(count + 1, 0, "Total Average")
     ws.write(count + 1, 1, str(np.mean(listOfAverageDurationTrip)))
-    ws.write(count + 1, 2, str(np.mean(listOfLaneChange)))
-    ws.write(count + 1, 3, str(np.mean(keepTrackAverageLCC)))
-    ws.write(count + 1, 4, str(np.mean(keepTrackAverageNoLCC)))
+    ws.write(count + 1, 3, str(np.mean(listOfLaneChange)))
+    ws.write(count + 1, 4, str(np.mean(keepTrackAverageLCC)))
+    ws.write(count + 1, 5, str(np.mean(keepTrackAverageNoLCC)))
+    ws.write(count + 1, 6, str(np.mean(keepTrackAverageTimeLossLCC)))
+    ws.write(count + 1, 7, str(np.mean(keepTrackAverageTimeLossNoLCC)))
     wb.save(dirName + '/results.xls')
 
 def main():
     for idx, simulation in enumerate(listOfSimulation):
         traci.start(simulation)
         allLanes = AllLanes()
-        print("SIMULATION " + str(idx) + " / SEED: " + str(randomSeed))
+        print("SIMULATION " + str(idx) + " / SEED: " + str(listOfSeed[idx]))
         while traci.simulation.getMinExpectedNumber() > 0:
             traci.simulationStep()
             allLanes.handlesAllManoeuvres()
